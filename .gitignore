@@ -2,3 +2,4 @@ supabase/.temp/
 supabase/.branches/
 .DS_Store
 SMTP設定步驟.md
+__pycache__/
