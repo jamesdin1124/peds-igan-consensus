@@ -270,6 +270,21 @@ const GROUPS = [
 ];
 const COR = [{v:'I',label:'I'},{v:'IIa',label:'IIa'},{v:'IIb',label:'IIb'},{v:'III-NB',label:'III：無益'},{v:'III-H',label:'III：有害'}];
 const LOE = ['A','B-R','B-NR','C-LD','C-EO'];
+const COR_OPTS = [
+  {v:'I', label:'I：建議（益處遠大於風險）'},
+  {v:'IIa', label:'IIa：合理（益處明顯大於風險）'},
+  {v:'IIb', label:'IIb：可考慮（益處不小於風險）'},
+  {v:'III-NB', label:'III 無益：不建議（益處等於風險）'},
+  {v:'III-H', label:'III 有害：不應（風險大於益處）'}
+];
+const LOE_OPTS = [
+  {v:'A', label:'A：≥1 個高品質 RCT，或高品質 RCT 的統合分析'},
+  {v:'B-R', label:'B-R：≥1 個中等品質 RCT（隨機）'},
+  {v:'B-NR', label:'B-NR：設計良好的非隨機、觀察性或登錄研究'},
+  {v:'C-LD', label:'C-LD：有設計限制的研究，或資料有限'},
+  {v:'C-EO', label:'C-EO：專家意見（臨床經驗共識）'}
+];
+const optLabel = (opts, v) => { const o = opts.find(x => x.v === v); return o ? o.label : v; };
 const AGREE = [{v:5,zh:'非常同意',c:'--l5'},{v:4,zh:'同意',c:'--l4'},{v:3,zh:'中立',c:'--l3'},{v:2,zh:'不同意',c:'--l2'},{v:1,zh:'非常不同意',c:'--l1'},{v:0,zh:'棄權',c:null}];
 const STATUS = {voting:'投票中', draft:'草稿', consensus:'已定案', withdrawn:'撤回'};
 
@@ -538,8 +553,8 @@ function buildVoteForm(r){
   const pre = 'v-' + r.id + '-'; const form = h('form', {class:'vote'});
   const scale = h('div', {class:'scale', role:'radiogroup', 'aria-label':'同意程度'});
   AGREE.forEach(a => scale.append(h('label', null, h('input', {type:'radio', name:pre + 'a', value:String(a.v), checked:v.agree === a.v}), a.zh)));
-  const cor = h('select', {id:pre + 'cor'}); fillSelect(cor, COR, '同意原提案'); cor.value = v.cor || '';
-  const loe = h('select', {id:pre + 'loe'}); fillSelect(loe, LOE.map(x => ({v:x, label:x})), '同意原提案'); loe.value = v.loe || '';
+  const cor = h('select', {id:pre + 'cor'}); fillSelect(cor, COR_OPTS, r.cor ? '同意原提案（' + optLabel(COR_OPTS, r.cor) + '）' : '同意原提案'); cor.value = v.cor || '';
+  const loe = h('select', {id:pre + 'loe'}); fillSelect(loe, LOE_OPTS, r.loe ? '同意原提案（' + optLabel(LOE_OPTS, r.loe) + '）' : '同意原提案'); loe.value = v.loe || '';
   const c = h('textarea', {id:pre + 'c', placeholder:'評論：理由、台灣臨床經驗、文獻補充（會顯示你的姓名）'}); c.value = v.comment || '';
   const w = h('textarea', {id:pre + 'w', placeholder:'建議修改的條文文字（可空白）'}); w.value = v.wording || '';
   const msg = h('span', {class:'saved'}, saved ? '已儲存 ' + fmtTime(saved.updated_at) : '尚未投票');
@@ -672,7 +687,7 @@ async function onSession(session){
 }
 function init(){
   fillSelect($('pGroup'), GROUPS.map(g => ({v:g.id, label:g.id + ' ' + g.zh})));
-  fillSelect($('pCor'), COR, '未定'); fillSelect($('pLoe'), LOE.map(v => ({v, label:v})), '未定');
+  fillSelect($('pCor'), COR_OPTS, '未定'); fillSelect($('pLoe'), LOE_OPTS, '未定');
   $('emailForm').addEventListener('submit', sendCode);
   $('codeForm').addEventListener('submit', verifyCode);
   $('backEmail').addEventListener('click', () => { lsDel('igan.pendingEmail'); S.pendingEmail = null; $('codeForm').hidden = true; $('emailForm').hidden = false; });
