@@ -1,0 +1,643 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<title>台灣兒童 IgAN 共識投票</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600&family=Noto+Sans+TC:wght@400;500;700&family=Noto+Serif+TC:wght@600;700&display=swap">
+<style>
+/* Layout: one reading column (max 960px). Sticky toolbar holds group tabs and progress. One card per statement; the vote panel sits inside its card. */
+:root{
+  --bg:#f3f5f9; --surface:#ffffff; --surface-2:#eef1f7; --ink:#15203a; --muted:#56637c; --line:#d6dce7;
+  --accent:#1b3d8c; --accent-ink:#ffffff; --accent-soft:#e3e9f7;
+  --cor1:#1d6e3a; --cor1-bg:#dff0e5; --cor2a:#7a5d00; --cor2a-bg:#f8edc6; --cor2b:#9a4708; --cor2b-bg:#f9e3d0; --cor3:#9b2228; --cor3-bg:#f6dcde;
+  --l5:#1d6e3a; --l4:#74b087; --l3:#b9c1ce; --l2:#e3a093; --l1:#9b2228;
+  --ok:#1d6e3a; --warn:#9a4708; --bad:#9b2228;
+  --f-display:"Noto Serif TC","Songti TC","PMingLiU",serif;
+  --f-body:"Noto Sans TC","PingFang TC","Microsoft JhengHei",system-ui,sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,"SF Mono",Menlo,monospace;
+  --r:8px;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0f1524; --surface:#172036; --surface-2:#1d2842; --ink:#e7ecf6; --muted:#a3aec4; --line:#2c3854;
+  --accent:#8fb0ff; --accent-ink:#0f1524; --accent-soft:#22305a;
+  --cor1:#7fd39b; --cor1-bg:#183826; --cor2a:#ebcc63; --cor2a-bg:#3a3214; --cor2b:#f1a56a; --cor2b-bg:#3d2614; --cor3:#f08a8f; --cor3-bg:#40191c;
+  --l5:#4fb874; --l4:#2f7a4b; --l3:#4a5672; --l2:#9a5148; --l1:#d4555b;
+  --ok:#7fd39b; --warn:#f1a56a; --bad:#f08a8f; color-scheme:dark;
+}}
+:root[data-theme="dark"]{
+  --bg:#0f1524; --surface:#172036; --surface-2:#1d2842; --ink:#e7ecf6; --muted:#a3aec4; --line:#2c3854;
+  --accent:#8fb0ff; --accent-ink:#0f1524; --accent-soft:#22305a;
+  --cor1:#7fd39b; --cor1-bg:#183826; --cor2a:#ebcc63; --cor2a-bg:#3a3214; --cor2b:#f1a56a; --cor2b-bg:#3d2614; --cor3:#f08a8f; --cor3-bg:#40191c;
+  --l5:#4fb874; --l4:#2f7a4b; --l3:#4a5672; --l2:#9a5148; --l1:#d4555b;
+  --ok:#7fd39b; --warn:#f1a56a; --bad:#f08a8f; color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.65}
+.wrap{max-width:960px;margin:0 auto;padding-inline:16px;padding-block:20px 64px}
+h1,h2,h3{text-wrap:balance;margin:0}
+h1{font-family:var(--f-display);font-size:1.7rem;line-height:1.3;font-weight:700}
+h2{font-family:var(--f-display);font-size:1.2rem;font-weight:700}
+h3{font-size:1rem;font-weight:700}
+p{margin:0}
+a{color:var(--accent)}
+.muted{color:var(--muted)}
+.mono{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+.eyebrow{font-size:.75rem;letter-spacing:.08em;color:var(--muted);text-transform:uppercase;font-weight:500}
+header.top{display:grid;gap:8px;padding-block:8px 16px;border-bottom:1px solid var(--line)}
+.who{display:flex;flex-wrap:wrap;gap:8px;align-items:center;font-size:.85rem}
+.chip{display:inline-flex;align-items:center;gap:4px;padding:1px 8px;border-radius:999px;font-size:.78rem;border:1px solid var(--line);background:var(--surface);white-space:nowrap}
+.chip.ok{color:var(--ok);border-color:currentColor}
+.chip.warn{color:var(--warn);border-color:currentColor}
+.chip.bad{color:var(--bad);border-color:currentColor}
+.chip.acc{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.banner{padding:10px 14px;border-radius:var(--r);background:var(--surface-2);border:1px solid var(--line);font-size:.9rem}
+.banner.bad{border-color:var(--bad)}
+section.block{display:grid;gap:12px;margin-top:20px}
+details.legend{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:12px 16px}
+details.legend summary{cursor:pointer;font-weight:700}
+.tables{display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));margin-top:12px}
+.tbl{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:.85rem}
+th,td{border-bottom:1px solid var(--line);padding:6px 8px;text-align:left;vertical-align:top}
+th{font-weight:700;color:var(--muted);font-size:.78rem}
+.toolbar{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);padding-block:10px;border-bottom:1px solid var(--line);display:grid;gap:8px}
+.tabs{display:flex;gap:6px;overflow-x:auto;padding-bottom:2px}
+.tab{font:inherit;font-size:.85rem;padding:5px 12px;border-radius:999px;border:1px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer;white-space:nowrap}
+.tab[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.tab .n{font-family:var(--f-mono);font-size:.75rem;opacity:.8;margin-left:4px}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.grow{flex:1 1 220px;min-width:0}
+input[type=text],input[type=number],select,textarea{font:inherit;font-size:.9rem;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:6px 8px;width:100%}
+textarea{min-height:64px;resize:vertical}
+label.lab{display:grid;gap:4px;font-size:.8rem;color:var(--muted);min-width:0}
+button.btn{font:inherit;font-size:.85rem;padding:6px 14px;border-radius:6px;border:1px solid var(--accent);background:var(--accent);color:var(--accent-ink);cursor:pointer}
+button.btn.ghost{background:transparent;color:var(--accent)}
+button.btn:disabled{opacity:.5;cursor:not-allowed}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.list{display:grid;gap:14px;margin-top:14px}
+.group-h{margin-top:18px;display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.group-h .en{font-size:.82rem;color:var(--muted)}
+article.rec{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px 16px;display:grid;gap:10px;min-width:0}
+.rec-head{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.code{font-family:var(--f-mono);font-weight:600;font-size:.9rem}
+.topic{font-size:.8rem;color:var(--muted)}
+.stmt{font-size:1.02rem;line-height:1.7}
+.stmt-en{font-size:.88rem;color:var(--muted);font-style:italic}
+.badge{display:inline-flex;align-items:center;font-family:var(--f-mono);font-size:.78rem;font-weight:600;padding:2px 8px;border-radius:4px;white-space:nowrap}
+.cor-I{background:var(--cor1-bg);color:var(--cor1)}
+.cor-IIa{background:var(--cor2a-bg);color:var(--cor2a)}
+.cor-IIb{background:var(--cor2b-bg);color:var(--cor2b)}
+.cor-III-NB,.cor-III-H{background:var(--cor3-bg);color:var(--cor3)}
+.loe{background:var(--surface-2);color:var(--ink);border:1px solid var(--line)}
+details.more summary{cursor:pointer;font-size:.85rem;color:var(--accent)}
+.more-body{display:grid;gap:8px;margin-top:8px;font-size:.88rem}
+.more-body h4{margin:0;font-size:.78rem;color:var(--muted);letter-spacing:.04em}
+.tw{border-left:3px solid var(--accent);padding-left:10px}
+.refs{margin:0;padding-left:18px}
+.results{display:grid;gap:6px;background:var(--surface-2);border-radius:6px;padding:10px 12px;font-size:.85rem}
+.bar{display:flex;height:12px;border-radius:3px;overflow:hidden;background:var(--line)}
+.bar span{display:block;height:100%}
+.dist{display:flex;flex-wrap:wrap;gap:6px 14px}
+.vote{display:grid;gap:10px;border-top:1px dashed var(--line);padding-top:10px}
+.scale{display:flex;flex-wrap:wrap;gap:6px}
+.scale label{display:inline-flex;align-items:center;gap:4px;font-size:.83rem;padding:4px 10px;border:1px solid var(--line);border-radius:999px;cursor:pointer;background:var(--surface)}
+.scale input{accent-color:var(--accent)}
+.scale label:has(input:checked){border-color:var(--accent);background:var(--accent-soft)}
+.grid2{display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(200px,1fr))}
+.saved{font-size:.8rem;color:var(--muted)}
+.comments{display:grid;gap:8px}
+.cmt{font-size:.86rem;border-left:2px solid var(--line);padding-left:10px;display:grid;gap:2px}
+.cmt b{font-weight:700}
+.empty{background:var(--surface);border:1px dashed var(--line);border-radius:var(--r);padding:24px;text-align:center;color:var(--muted)}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px 16px;display:grid;gap:12px}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(16px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--bg);padding:8px 16px;border-radius:6px;font-size:.85rem;z-index:20}
+@media (prefers-reduced-motion:no-preference){.toast{transition:opacity .2s}}
+
+body{margin:0}
+input[type=email]{width:100%}
+[hidden]{display:none!important}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <span class="eyebrow">台灣腎臟醫學會 · 學術委員會 · 兒童 IgAN 工作小組</span>
+    <h1>台灣兒童 IgA 腎病變診治臨床共識 — 委員投票</h1>
+    <p class="muted">每一條核心條文請給同意程度，並提出你認為合適的推薦等級（COR）與證據等級（LOE）。可以寫評論與修改文字，也可以提出新條文。</p>
+    <div class="who" id="who"></div>
+  </header>
+
+  <div id="banner" class="banner" hidden></div>
+
+  <!-- Login -->
+  <section class="block" id="loginSec" hidden>
+    <form class="panel" id="emailForm" style="max-width:440px">
+      <h2>委員登入</h2>
+      <p class="muted">請輸入你提供給召集人的 email。系統會寄一封含 6 位數驗證碼的信給你。</p>
+      <label class="lab" for="loginEmail">Email<input type="email" id="loginEmail" required autocomplete="email" style="font:inherit;font-size:1rem;padding:8px;border:1px solid var(--line);border-radius:6px;background:var(--surface);color:var(--ink)"></label>
+      <div class="row"><button class="btn" type="submit" id="sendCode">寄驗證碼</button><span class="saved" id="emailMsg"></span></div>
+    </form>
+    <form class="panel" id="codeForm" style="max-width:440px" hidden>
+      <h2>輸入驗證碼</h2>
+      <p class="muted" id="codeHint">驗證碼已寄出。請查看信箱（也請看垃圾郵件匣）。</p>
+      <label class="lab" for="loginCode">6 位數驗證碼<input type="text" id="loginCode" inputmode="numeric" autocomplete="one-time-code" maxlength="8" style="font-family:var(--f-mono);font-size:1.4rem;letter-spacing:.3em;padding:8px;border:1px solid var(--line);border-radius:6px;background:var(--surface);color:var(--ink)"></label>
+      <p class="muted" style="font-size:.85rem">如果信裡只有「登入」連結、沒有數字，直接點連結也可以登入。</p>
+      <div class="row"><button class="btn" type="submit" id="verifyCode">登入</button><button class="btn ghost" type="button" id="backEmail">換一個 email</button><span class="saved" id="codeMsg"></span></div>
+    </form>
+  </section>
+
+  <!-- App -->
+  <div id="appSec" hidden>
+    <section class="block">
+      <details class="legend">
+        <summary>分級系統與共識規則（AHA/ACC 2015 COR／LOE，附 KDIGO 對應）</summary>
+        <div class="tables">
+          <div class="tbl"><table>
+            <thead><tr><th>推薦等級 COR</th><th>定義</th><th>用語</th><th>KDIGO 對應</th></tr></thead>
+            <tbody>
+              <tr><td><span class="badge cor-I">I</span></td><td>益處 &gt;&gt;&gt; 風險</td><td>建議</td><td>1（We recommend）</td></tr>
+              <tr><td><span class="badge cor-IIa">IIa</span></td><td>益處 &gt;&gt; 風險</td><td>合理</td><td>2（We suggest）</td></tr>
+              <tr><td><span class="badge cor-IIb">IIb</span></td><td>益處 ≥ 風險</td><td>可考慮</td><td>2（We suggest）</td></tr>
+              <tr><td><span class="badge cor-III-NB">III：無益</span></td><td>益處 = 風險</td><td>不建議</td><td>1 或 2（recommend/suggest not）</td></tr>
+              <tr><td><span class="badge cor-III-H">III：有害</span></td><td>風險 &gt; 益處</td><td>不應</td><td>1（recommend not）</td></tr>
+            </tbody></table></div>
+          <div class="tbl"><table>
+            <thead><tr><th>證據等級 LOE</th><th>定義</th><th>KDIGO 對應</th></tr></thead>
+            <tbody>
+              <tr><td><span class="badge loe">A</span></td><td>高品質 RCT 或其統合分析</td><td>A</td></tr>
+              <tr><td><span class="badge loe">B-R</span></td><td>中等品質 RCT</td><td>B</td></tr>
+              <tr><td><span class="badge loe">B-NR</span></td><td>設計良好的非隨機、觀察性、登錄研究</td><td>C</td></tr>
+              <tr><td><span class="badge loe">C-LD</span></td><td>有限制的研究或資料有限</td><td>D</td></tr>
+              <tr><td><span class="badge loe">C-EO</span></td><td>專家意見</td><td>Practice Point（不分級）</td></tr>
+            </tbody></table></div>
+          <div class="tbl"><table>
+            <thead><tr><th>共識規則（修正式 Delphi）</th></tr></thead>
+            <tbody>
+              <tr><td>同意程度分 5 級。「同意」與「非常同意」合計為同意。</td></tr>
+              <tr><td id="ruleLine">同意比例 ≥ 75%，且有效票 ≥ 3 票，該條達成共識。</td></tr>
+              <tr><td>「實施細節」隨核心條文一起接受，不另投票。對細節有意見，請寫在評論欄並註明原編號。</td></tr>
+              <tr><td>有利益衝突或不熟悉該主題，請選「棄權」。棄權不計入分母。</td></tr>
+              <tr><td>評論會顯示你的姓名。個人的同意程度不公開，只顯示統計。</td></tr>
+            </tbody></table></div>
+        </div>
+      </details>
+    </section>
+
+    <div class="toolbar">
+      <div class="tabs" id="tabs" role="toolbar" aria-label="依組別篩選"></div>
+      <div class="row">
+        <input type="text" id="q" class="grow" placeholder="搜尋條文、主題、v1 編號或文獻" aria-label="搜尋條文">
+        <button class="btn ghost" id="refresh" type="button">更新統計</button>
+      </div>
+    </div>
+
+    <div id="list" class="list"><div class="empty">條文載入中…</div></div>
+
+    <section class="block">
+      <h2>提出新條文</h2>
+      <form class="panel" id="proposeForm">
+        <p class="muted">你提出的條文會出現在「委員提案」分頁。召集人審閱後，可以採納為正式投票條文。</p>
+        <div class="grid2">
+          <label class="lab">組別<select id="pGroup"></select></label>
+          <label class="lab">主題（短）<input type="text" id="pTopic" placeholder="例：扁桃腺切除"></label>
+          <label class="lab">建議 COR<select id="pCor"></select></label>
+          <label class="lab">建議 LOE<select id="pLoe"></select></label>
+        </div>
+        <label class="lab">推薦句<textarea id="pText" required></textarea></label>
+        <label class="lab">依據與台灣資料<textarea id="pWhy" placeholder="文獻（PMID）、台灣在地資料、健保給付現況"></textarea></label>
+        <div class="row"><button class="btn" type="submit" id="pSubmit">送出提案</button><span class="saved" id="pMsg"></span></div>
+      </form>
+    </section>
+
+    <section class="block" id="adminSec" hidden>
+      <h2>召集人管理</h2>
+      <div class="panel">
+        <h3>委員名單</h3>
+        <p class="muted">只有名單內的 email 可以登入。新增後，請用 LINE 把網址傳給該委員。</p>
+        <div class="tbl"><table><thead><tr><th>Email</th><th>顯示姓名</th><th>角色</th><th>本輪已投</th><th></th></tr></thead><tbody id="memberRows"></tbody></table></div>
+        <form class="grid2" id="memberForm">
+          <label class="lab">Email<input type="text" id="mEmail" required placeholder="name@hospital.org"></label>
+          <label class="lab">顯示姓名<input type="text" id="mName" required placeholder="例：田祐霖"></label>
+          <label class="lab">角色<select id="mRole"><option value="voter">委員</option><option value="admin">召集人</option></select></label>
+          <div class="lab"><span>&nbsp;</span><button class="btn" type="submit">新增委員</button></div>
+        </form>
+        <span class="saved" id="memberMsg"></span>
+      </div>
+      <div class="panel">
+        <h3>投票設定</h3>
+        <div class="grid2">
+          <label class="lab">目前輪次<input type="number" id="cRound" min="1" max="9"></label>
+          <label class="lab">共識門檻（同意 %）<input type="number" id="cTh" min="50" max="100"></label>
+          <label class="lab">最少有效票數<input type="number" id="cMin" min="1" max="50"></label>
+        </div>
+        <div class="row">
+          <button class="btn" id="cSave" type="button">儲存設定</button>
+          <button class="btn ghost" id="exportCsv" type="button">匯出投票結果（CSV）</button>
+          <span class="saved" id="cMsg"></span>
+        </div>
+      </div>
+    </section>
+  </div>
+</div>
+<div class="toast" id="toast" hidden></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script>
+const SUPABASE_URL = 'https://tqgfwcumuhxbcebofavf.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_BSTP8Ll5WtzyCbez6dPLxQ_P5ro5K7m';
+const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {auth:{persistSession:true, detectSessionInUrl:true, flowType:'implicit'}});
+
+const GROUPS = [
+  {id:'G1', zh:'流行病學與病生理', en:'Epidemiology & Pathophysiology'},
+  {id:'G2', zh:'診斷與初始評估', en:'Diagnosis & Initial Evaluation'},
+  {id:'G3', zh:'風險分層與預後', en:'Risk Stratification & Prognosis'},
+  {id:'G4', zh:'傳統治療', en:'Traditional Treatment'},
+  {id:'G5', zh:'新興治療與臨床試驗', en:'Emerging Therapies & Clinical Trials'},
+  {id:'G6', zh:'精準醫療與生物標記', en:'Precision Medicine & Biomarkers'},
+  {id:'G7', zh:'兒童特有議題', en:'Pediatric-specific Issues'}
+];
+const COR = [{v:'I',label:'I'},{v:'IIa',label:'IIa'},{v:'IIb',label:'IIb'},{v:'III-NB',label:'III：無益'},{v:'III-H',label:'III：有害'}];
+const LOE = ['A','B-R','B-NR','C-LD','C-EO'];
+const AGREE = [{v:5,zh:'非常同意',c:'--l5'},{v:4,zh:'同意',c:'--l4'},{v:3,zh:'中立',c:'--l3'},{v:2,zh:'不同意',c:'--l2'},{v:1,zh:'非常不同意',c:'--l1'},{v:0,zh:'棄權',c:null}];
+const STATUS = {voting:'投票中', draft:'草稿', consensus:'已定案', withdrawn:'撤回'};
+
+const S = {email:null, me:null, admin:false, recs:[], mine:{}, summary:{}, proposals:[], members:[], cfg:{round:1, threshold:75, min_votes:3}, filter:'all', q:'', cards:new Map(), pendingEmail:null};
+
+const $ = id => document.getElementById(id);
+function h(tag, attrs, ...kids){
+  const el = document.createElement(tag);
+  if (attrs) for (const [k,v] of Object.entries(attrs)){
+    if (v == null || v === false) continue;
+    if (k === 'class') el.className = v;
+    else if (k.startsWith('on')) el.addEventListener(k.slice(2), v);
+    else el.setAttribute(k, v === true ? '' : v);
+  }
+  for (const kid of kids.flat()){ if (kid == null || kid === false) continue; el.append(kid instanceof Node ? kid : document.createTextNode(String(kid))); }
+  return el;
+}
+function toast(msg){ const t = $('toast'); t.textContent = msg; t.hidden = false; clearTimeout(toast._t); toast._t = setTimeout(() => { t.hidden = true; }, 2600); }
+function banner(msg, bad){ const b = $('banner'); if (!msg){ b.hidden = true; return; } b.textContent = msg; b.hidden = false; b.classList.toggle('bad', !!bad); }
+function lsGet(k){ try { return JSON.parse(localStorage.getItem(k) || 'null'); } catch { return null; } }
+function lsSet(k, v){ try { localStorage.setItem(k, JSON.stringify(v)); } catch {} }
+function lsDel(k){ try { localStorage.removeItem(k); } catch {} }
+function corBadge(v){ const c = COR.find(x => x.v === v); return c ? h('span', {class:'badge cor-' + v, title:'推薦等級'}, 'COR ' + c.label) : null; }
+function loeBadge(v){ return v ? h('span', {class:'badge loe', title:'證據等級'}, 'LOE ' + v) : null; }
+function kdigoBadge(v){ return v ? h('span', {class:'badge loe', title:'KDIGO 分級對應'}, 'KDIGO ' + v) : null; }
+function groupOf(id){ return GROUPS.find(g => g.id === id) || {id, zh:id, en:''}; }
+function fmtTime(iso){ if (!iso) return ''; const d = new Date(iso); return (d.getMonth()+1) + '/' + d.getDate() + ' ' + String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0'); }
+function fillSelect(sel, opts, blank){ sel.replaceChildren(); if (blank) sel.append(h('option', {value:''}, blank)); opts.forEach(o => sel.append(h('option', {value:o.v}, o.label))); }
+function errText(e){ return (e && (e.message || e.error_description)) || '未知錯誤'; }
+
+/* ---------- auth ---------- */
+async function sendCode(e){
+  e.preventDefault();
+  const email = $('loginEmail').value.trim().toLowerCase(); const msg = $('emailMsg');
+  if (!email) return;
+  $('sendCode').disabled = true; msg.textContent = '確認名單中…';
+  try {
+    const {data:ok, error} = await sb.rpc('is_allowed_email', {p_email:email});
+    if (error) throw error;
+    if (!ok){ msg.textContent = '這個 email 不在委員名單。請聯絡召集人加入。'; return; }
+    msg.textContent = '寄送中…';
+    const {error:e2} = await sb.auth.signInWithOtp({email, options:{shouldCreateUser:true, emailRedirectTo: location.origin + location.pathname}});
+    if (e2) throw e2;
+    S.pendingEmail = email; lsSet('igan.pendingEmail', email);
+    $('emailForm').hidden = true; $('codeForm').hidden = false; $('codeHint').textContent = '驗證碼已寄到 ' + email + '。請查看信箱（也請看垃圾郵件匣）。'; $('loginCode').focus();
+  } catch (err) {
+    msg.textContent = /rate|seconds|frequency/i.test(errText(err)) ? '寄送太頻繁。請等 1 分鐘再試。' : '寄送失敗：' + errText(err);
+  } finally { $('sendCode').disabled = false; }
+}
+async function verifyCode(e){
+  e.preventDefault();
+  const token = $('loginCode').value.replace(/\D/g, ''); const msg = $('codeMsg');
+  const email = S.pendingEmail || lsGet('igan.pendingEmail');
+  if (!email){ msg.textContent = '請先輸入 email。'; return; }
+  if (token.length < 6){ msg.textContent = '請輸入完整的驗證碼。'; return; }
+  $('verifyCode').disabled = true; msg.textContent = '驗證中…';
+  try {
+    let {error} = await sb.auth.verifyOtp({email, token, type:'email'});
+    if (error){ const r2 = await sb.auth.verifyOtp({email, token, type:'signup'}); error = r2.error; }
+    if (error) throw error;
+    lsDel('igan.pendingEmail'); msg.textContent = '';
+  } catch (err) { msg.textContent = '驗證碼錯誤或已過期。請重新寄送。'; }
+  finally { $('verifyCode').disabled = false; }
+}
+function showLogin(){
+  $('appSec').hidden = true; $('loginSec').hidden = false;
+  const pending = lsGet('igan.pendingEmail');
+  $('emailForm').hidden = !!pending; $('codeForm').hidden = !pending;
+  if (pending){ S.pendingEmail = pending; $('codeHint').textContent = '驗證碼已寄到 ' + pending + '。'; }
+  renderWho();
+}
+async function signOut(){ await sb.auth.signOut(); location.reload(); }
+
+/* ---------- data ---------- */
+async function loadAll(){
+  const [cfg, recs, mine, props, mem] = await Promise.all([
+    sb.from('config').select('*').eq('id', 1).maybeSingle(),
+    sb.from('recs').select('*').order('grp').order('ord'),
+    sb.from('ballots').select('*').eq('voter_email', S.email),
+    sb.from('proposals').select('*').order('created_at'),
+    sb.from('members').select('*').order('added_at')
+  ]);
+  for (const r of [cfg, recs, mine, props, mem]) if (r.error) throw r.error;
+  if (cfg.data) S.cfg = cfg.data;
+  S.recs = recs.data || [];
+  S.mine = {}; (mine.data || []).forEach(b => { S.mine[b.round + ':' + b.rec_id] = b; });
+  S.proposals = props.data || [];
+  S.members = mem.data || [];
+  S.me = S.members.find(m => m.email === S.email) || null;
+  S.admin = !!(S.me && S.me.role === 'admin');
+  await loadSummary();
+}
+async function loadSummary(){
+  const {data, error} = await sb.rpc('round_summary', {p_round:S.cfg.round});
+  if (error) throw error;
+  S.summary = data || {};
+}
+function myBallot(recId){ return S.mine[S.cfg.round + ':' + recId] || null; }
+function tally(recId){
+  const s = S.summary[recId] || {};
+  const counts = {5:s.n5||0, 4:s.n4||0, 3:s.n3||0, 2:s.n2||0, 1:s.n1||0};
+  const valid = counts[5]+counts[4]+counts[3]+counts[2]+counts[1];
+  const pct = valid ? Math.round((counts[5]+counts[4]) / valid * 100) : 0;
+  let state = 'pending'; if (valid >= S.cfg.min_votes) state = pct >= S.cfg.threshold ? 'yes' : 'no';
+  return {counts, valid, pct, state, abstain:s.abstain||0, cor:s.cor||{}, loe:s.loe||{}, comments:s.comments||[], voters:s.voters||0};
+}
+
+/* ---------- render ---------- */
+function renderWho(){
+  const w = $('who'); w.replaceChildren();
+  if (!S.email){ w.append(h('span', {class:'chip'}, '尚未登入')); return; }
+  w.append(h('span', {class:'chip acc'}, '第 ' + S.cfg.round + ' 輪'));
+  const active = S.recs.filter(r => r.status === 'voting');
+  const done = active.filter(r => myBallot(r.id)).length;
+  w.append(h('span', {class:'chip ' + (done === active.length && active.length ? 'ok' : '')}, '我已投 ' + done + ' / ' + active.length + ' 條'));
+  w.append(h('span', {class:'chip ok'}, '達共識 ' + active.filter(r => tally(r.id).state === 'yes').length + ' 條'));
+  w.append(h('span', {class:'chip'}, (S.me && S.me.display_name) || S.email));
+  if (S.admin) w.append(h('span', {class:'chip'}, '召集人'));
+  w.append(h('button', {class:'btn ghost', type:'button', style:'padding:1px 10px;font-size:.78rem', onclick:signOut}, '登出'));
+  $('ruleLine').textContent = '同意比例 ≥ ' + S.cfg.threshold + '%，且有效票 ≥ ' + S.cfg.min_votes + ' 票，該條達成共識。';
+}
+function visibleRecs(){ return S.recs.filter(r => r.status !== 'withdrawn' || S.admin); }
+function renderTabs(){
+  const tabs = $('tabs'); tabs.replaceChildren(); const recs = visibleRecs();
+  const mk = (id, label, n) => h('button', {type:'button', class:'tab', 'aria-pressed':String(S.filter === id), onclick:() => { S.filter = id; lsSet('igan.filter', id); renderTabs(); renderList(); }}, label, h('span', {class:'n'}, n));
+  tabs.append(mk('all', '全部', recs.length));
+  GROUPS.forEach(g => { const n = recs.filter(r => r.grp === g.id).length; if (n) tabs.append(mk(g.id, g.id + ' ' + g.zh, n)); });
+  tabs.append(mk('todo', '我還沒投', recs.filter(r => r.status === 'voting' && !myBallot(r.id)).length));
+  tabs.append(mk('prop', '委員提案', S.proposals.length));
+}
+function matches(r){
+  if (S.filter === 'todo' && !(r.status === 'voting' && !myBallot(r.id))) return false;
+  if (/^G\d$/.test(S.filter) && r.grp !== S.filter) return false;
+  if (!S.q) return true;
+  return [r.code, r.topic, r.text, r.text_en, r.taiwan, r.rationale, JSON.stringify(r.refs), JSON.stringify(r.src), JSON.stringify(r.details)].join(' ').toLowerCase().includes(S.q);
+}
+function renderList(){
+  const list = $('list');
+  if (S.filter === 'prop'){ renderProposals(); return; }
+  list.replaceChildren(); S.cards.clear();
+  const recs = visibleRecs().filter(matches).sort((a,b) => a.grp.localeCompare(b.grp) || a.ord - b.ord);
+  if (!S.recs.length){ list.append(h('div', {class:'empty'}, '目前還沒有條文。召集人載入後就會出現。')); return; }
+  if (!recs.length){ list.append(h('div', {class:'empty'}, '沒有符合篩選條件的條文。')); return; }
+  let cur = null;
+  for (const r of recs){
+    if (r.grp !== cur){ cur = r.grp; const g = groupOf(cur); list.append(h('div', {class:'group-h'}, h('h2', null, g.id + '　' + g.zh), h('span', {class:'en'}, g.en))); }
+    list.append(buildCard(r));
+  }
+}
+function linkify(text){
+  const frag = document.createDocumentFragment(); const s = String(text || '');
+  const re = /(PMID[:\s]*)(\d{6,9})|(doi[:\s]*)(10\.\S+[^\s.,;)\]])|(https?:\/\/[^\s\]）)]+)/gi; let last = 0, m;
+  while ((m = re.exec(s))){
+    frag.append(s.slice(last, m.index));
+    if (m[2]) frag.append(m[1], h('a', {href:'https://pubmed.ncbi.nlm.nih.gov/' + m[2] + '/', target:'_blank', rel:'noopener'}, m[2]));
+    else if (m[4]) frag.append(m[3], h('a', {href:'https://doi.org/' + m[4], target:'_blank', rel:'noopener'}, m[4]));
+    else frag.append(h('a', {href:m[5], target:'_blank', rel:'noopener'}, m[5].length > 60 ? m[5].slice(0, 57) + '…' : m[5]));
+    last = re.lastIndex;
+  }
+  frag.append(s.slice(last)); return frag;
+}
+function buildCard(r){
+  const card = h('article', {class:'rec', id:'rec-' + r.id});
+  card.append(h('div', {class:'rec-head'}, h('span', {class:'code'}, r.code), r.topic ? h('span', {class:'topic'}, r.topic) : null, corBadge(r.cor), loeBadge(r.loe), kdigoBadge(r.kdigo),
+    r.status !== 'voting' ? h('span', {class:'chip ' + (r.status === 'consensus' ? 'ok' : '')}, STATUS[r.status] || r.status) : null));
+  card.append(h('p', {class:'stmt'}, r.text));
+  if (r.text_en) card.append(h('p', {class:'stmt-en'}, r.text_en));
+  const refs = Array.isArray(r.refs) ? r.refs : [];
+  if (r.taiwan || r.rationale || refs.length){
+    const body = h('div', {class:'more-body'});
+    if (r.taiwan) body.append(h('div', {class:'tw'}, h('h4', null, '台灣在地資料'), h('p', null, linkify(r.taiwan))));
+    if (r.rationale) body.append(h('div', null, h('h4', null, '依據、國際指引對照與待討論'), ...String(r.rationale).split('\n').map(p => h('p', null, linkify(p)))));
+    if (refs.length) body.append(h('div', null, h('h4', null, '參考文獻'), h('ol', {class:'refs'}, refs.map(x => h('li', null, linkify(x))))));
+    card.append(h('details', {class:'more'}, h('summary', null, '證據、台灣資料與文獻'), body));
+  }
+  const det = Array.isArray(r.details) ? r.details : [];
+  if (det.length){
+    card.append(h('details', {class:'more'}, h('summary', null, '實施細節 ' + det.length + ' 項（隨本條一起接受，不另投票）'),
+      h('div', {class:'more-body'}, h('div', {class:'tbl'}, h('table', null,
+        h('thead', null, h('tr', null, h('th', null, '原編號'), h('th', null, '內容'), h('th', null, 'COR'), h('th', null, 'LOE'))),
+        h('tbody', null, det.map(d => h('tr', null, h('td', {class:'mono'}, d.code || ''), h('td', null, d.text || ''), h('td', null, corBadge(d.cor)), h('td', null, loeBadge(d.loe))))))))));
+  }
+  const src = Array.isArray(r.src) ? r.src : [];
+  if (src.length) card.append(h('p', {class:'topic'}, '由 v1 條文整合：' + src.join('、')));
+  const results = h('div', {class:'results'}); const comments = h('div', {class:'comments'});
+  card.append(results);
+  if (r.status === 'voting') card.append(buildVoteForm(r));
+  card.append(comments);
+  S.cards.set(r.id, {results, comments});
+  fillResults(r.id);
+  return card;
+}
+function fillResults(recId){
+  const c = S.cards.get(recId); if (!c) return;
+  const t = tally(recId); const box = c.results; box.replaceChildren();
+  const chip = t.state === 'yes' ? h('span', {class:'chip ok'}, '達成共識') : t.state === 'no' ? h('span', {class:'chip bad'}, '未達共識') : h('span', {class:'chip'}, '有效票未足 ' + S.cfg.min_votes + ' 票');
+  box.append(h('div', {class:'row'}, h('b', null, '第 ' + S.cfg.round + ' 輪結果'), chip, h('span', {class:'mono'}, '同意 ' + t.pct + '%'), h('span', {class:'muted mono'}, '有效 ' + t.valid + ' 票' + (t.abstain ? ' · 棄權 ' + t.abstain : ''))));
+  const bar = h('div', {class:'bar', role:'img', 'aria-label':'同意程度分布'});
+  if (t.valid) [5,4,3,2,1].forEach(v => { if (t.counts[v]){ const a = AGREE.find(x => x.v === v); bar.append(h('span', {style:'width:' + (t.counts[v] / t.valid * 100) + '%;background:var(' + a.c + ')', title:a.zh + ' ' + t.counts[v]})); } });
+  box.append(bar);
+  box.append(h('div', {class:'dist'}, [5,4,3,2,1].map(v => h('span', null, AGREE.find(a => a.v === v).zh + ' ', h('span', {class:'mono'}, t.counts[v])))));
+  const corTxt = Object.entries(t.cor).map(([k,n]) => ((COR.find(x => x.v === k)||{label:k}).label) + '×' + n).join('　');
+  const loeTxt = Object.entries(t.loe).map(([k,n]) => k + '×' + n).join('　');
+  if (corTxt || loeTxt) box.append(h('div', {class:'dist muted'}, corTxt ? h('span', null, '委員建議 COR：' + corTxt) : null, loeTxt ? h('span', null, '委員建議 LOE：' + loeTxt) : null));
+  const cm = c.comments; cm.replaceChildren();
+  if (t.comments.length){
+    cm.append(h('h3', null, '委員評論（' + t.comments.length + '）'));
+    t.comments.forEach(x => cm.append(h('div', {class:'cmt'},
+      h('div', null, h('b', null, x.name || '委員'), x.cor ? ' · 建議 COR ' + x.cor : '', x.loe ? ' · 建議 LOE ' + x.loe : ''),
+      x.comment ? h('p', null, x.comment) : null, x.wording ? h('p', null, h('span', {class:'muted'}, '建議修改：'), x.wording) : null)));
+  }
+}
+function buildVoteForm(r){
+  const saved = myBallot(r.id); const dk = 'igan.draft.' + S.cfg.round + '.' + r.id; const draft = lsGet(dk);
+  const v = Object.assign({agree:null, cor:'', loe:'', comment:'', wording:''}, saved || {}, draft || {});
+  const pre = 'v-' + r.id + '-'; const form = h('form', {class:'vote'});
+  const scale = h('div', {class:'scale', role:'radiogroup', 'aria-label':'同意程度'});
+  AGREE.forEach(a => scale.append(h('label', null, h('input', {type:'radio', name:pre + 'a', value:String(a.v), checked:v.agree === a.v}), a.zh)));
+  const cor = h('select', {id:pre + 'cor'}); fillSelect(cor, COR, '同意原提案'); cor.value = v.cor || '';
+  const loe = h('select', {id:pre + 'loe'}); fillSelect(loe, LOE.map(x => ({v:x, label:x})), '同意原提案'); loe.value = v.loe || '';
+  const c = h('textarea', {id:pre + 'c', placeholder:'評論：理由、台灣臨床經驗、文獻補充（會顯示你的姓名）'}); c.value = v.comment || '';
+  const w = h('textarea', {id:pre + 'w', placeholder:'建議修改的條文文字（可空白）'}); w.value = v.wording || '';
+  const msg = h('span', {class:'saved'}, saved ? '已儲存 ' + fmtTime(saved.updated_at) : '尚未投票');
+  const btn = h('button', {class:'btn', type:'submit'}, saved ? '更新我的投票' : '送出投票');
+  form.append(h('h3', null, '我的投票'), scale,
+    h('div', {class:'grid2'}, h('label', {class:'lab'}, '我建議的 COR', cor), h('label', {class:'lab'}, '我建議的 LOE', loe)),
+    h('div', {class:'grid2'}, h('label', {class:'lab'}, '評論', c), h('label', {class:'lab'}, '修改文字', w)),
+    h('div', {class:'row'}, btn, msg));
+  const read = () => { const sel = form.querySelector('input[name="' + pre + 'a"]:checked'); return {agree: sel ? Number(sel.value) : null, cor:cor.value, loe:loe.value, comment:c.value.trim(), wording:w.value.trim()}; };
+  form.addEventListener('input', () => { lsSet(dk, read()); msg.textContent = '有未送出的修改'; });
+  form.addEventListener('submit', async e => {
+    e.preventDefault(); const b = read();
+    if (b.agree == null){ msg.textContent = '請先選同意程度。'; return; }
+    btn.disabled = true; msg.textContent = '儲存中…';
+    const row = {round:S.cfg.round, rec_id:r.id, voter_email:S.email, agree:b.agree, cor:b.cor || null, loe:b.loe || null, comment:b.comment, wording:b.wording, updated_at:new Date().toISOString()};
+    const {data, error} = await sb.from('ballots').upsert(row, {onConflict:'round,rec_id,voter_email'}).select().single();
+    btn.disabled = false;
+    if (error){ msg.textContent = '無法儲存：' + errText(error); return; }
+    S.mine[S.cfg.round + ':' + r.id] = data; lsDel(dk);
+    msg.textContent = '已儲存 ' + fmtTime(data.updated_at); btn.textContent = '更新我的投票'; toast('已儲存 ' + r.code + ' 的投票');
+    try { await loadSummary(); fillResults(r.id); renderWho(); } catch {}
+  });
+  return form;
+}
+
+/* ---------- proposals ---------- */
+function nameOf(email){ const m = S.members.find(x => x.email === email); return (m && m.display_name) || (email || '').split('@')[0]; }
+function renderProposals(){
+  const list = $('list'); list.replaceChildren(); S.cards.clear();
+  const ps = S.proposals.filter(p => !S.q || [p.text, p.why, p.topic].join(' ').toLowerCase().includes(S.q));
+  if (!ps.length){ list.append(h('div', {class:'empty'}, '目前沒有委員提案。請用下方的「提出新條文」表單。')); return; }
+  ps.forEach(p => {
+    const g = groupOf(p.grp);
+    const card = h('article', {class:'rec'},
+      h('div', {class:'rec-head'}, h('span', {class:'code'}, g.id), h('span', {class:'topic'}, g.zh + (p.topic ? ' · ' + p.topic : '')), corBadge(p.cor), loeBadge(p.loe), h('span', {class:'chip'}, '提案人：' + nameOf(p.voter_email))),
+      h('p', {class:'stmt'}, p.text), p.why ? h('p', {class:'muted'}, linkify(p.why)) : null);
+    const row = h('div', {class:'row'});
+    if (S.admin) row.append(h('button', {class:'btn ghost', type:'button', onclick:() => adopt(p)}, '採納為投票條文'));
+    if (p.voter_email === S.email || S.admin) row.append(h('button', {class:'btn ghost', type:'button', onclick:() => delProposal(p.id)}, '撤回提案'));
+    card.append(row); list.append(card);
+  });
+}
+async function submitProposal(e){
+  e.preventDefault(); const msg = $('pMsg'); const text = $('pText').value.trim();
+  if (!text){ msg.textContent = '請填寫推薦句。'; return; }
+  $('pSubmit').disabled = true;
+  const {error} = await sb.from('proposals').insert({voter_email:S.email, grp:$('pGroup').value, topic:$('pTopic').value.trim(), cor:$('pCor').value || null, loe:$('pLoe').value || null, text, why:$('pWhy').value.trim()});
+  $('pSubmit').disabled = false;
+  if (error){ msg.textContent = '無法送出：' + errText(error); return; }
+  $('proposeForm').reset(); msg.textContent = '已送出。請到「委員提案」分頁查看。'; toast('提案已送出');
+  await refresh();
+}
+async function delProposal(id){ const {error} = await sb.from('proposals').delete().eq('id', id); if (error){ toast('無法撤回'); return; } toast('提案已撤回'); await refresh(); }
+async function adopt(p){
+  const n = S.recs.filter(r => r.grp === p.grp).length + 1;
+  const id = 'p' + p.id.slice(0, 8);
+  const {error} = await sb.from('recs').insert({id, grp:p.grp, ord:100 + n, code:p.grp.slice(1) + '.P' + n, topic:p.topic, text:p.text, cor:p.cor, loe:p.loe, rationale:p.why ? '委員提案（' + nameOf(p.voter_email) + '）：' + p.why : '委員提案（' + nameOf(p.voter_email) + '）', status:'voting'});
+  if (error){ toast('無法採納：' + errText(error)); return; }
+  toast('已採納為 ' + p.grp + ' 條文'); await refresh();
+}
+
+/* ---------- admin ---------- */
+function renderAdmin(){
+  $('adminSec').hidden = !S.admin; if (!S.admin) return;
+  const tb = $('memberRows'); tb.replaceChildren();
+  S.members.forEach(m => {
+    const voted = S.recs.filter(r => r.status === 'voting').length;
+    tb.append(h('tr', null, h('td', {class:'mono'}, m.email), h('td', null, m.display_name), h('td', null, m.role === 'admin' ? '召集人' : '委員'),
+      h('td', {class:'mono', 'data-email':m.email}, '—'),
+      h('td', null, m.email === S.email ? '' : h('button', {class:'btn ghost', type:'button', style:'padding:1px 10px', onclick:() => removeMember(m.email)}, '移除'))));
+  });
+  if (!['cRound','cTh','cMin'].includes(document.activeElement && document.activeElement.id)){ $('cRound').value = S.cfg.round; $('cTh').value = S.cfg.threshold; $('cMin').value = S.cfg.min_votes; }
+  fillVotedCounts();
+}
+async function fillVotedCounts(){
+  const {data, error} = await sb.from('ballots').select('voter_email').eq('round', S.cfg.round);
+  if (error) return; const n = {}; (data || []).forEach(b => { n[b.voter_email] = (n[b.voter_email] || 0) + 1; });
+  document.querySelectorAll('#memberRows td[data-email]').forEach(td => { td.textContent = (n[td.dataset.email] || 0) + ' 條'; });
+}
+async function addMember(e){
+  e.preventDefault(); const msg = $('memberMsg');
+  const email = $('mEmail').value.trim().toLowerCase(); const name = $('mName').value.trim();
+  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)){ msg.textContent = 'Email 格式不對。'; return; }
+  const {error} = await sb.from('members').insert({email, display_name:name, role:$('mRole').value});
+  if (error){ msg.textContent = /duplicate/i.test(errText(error)) ? '這個 email 已在名單中。' : '無法新增：' + errText(error); return; }
+  $('memberForm').reset(); msg.textContent = '已新增 ' + name + '。請用 LINE 把網址傳給他。'; await refresh();
+}
+async function removeMember(email){
+  const msg = $('memberMsg');
+  if (msg.dataset.confirm !== email){ msg.dataset.confirm = email; msg.textContent = '再按一次「移除」，確認移除 ' + email + '。已投的票會保留。'; return; }
+  msg.dataset.confirm = '';
+  const {error} = await sb.from('members').delete().eq('email', email);
+  msg.textContent = error ? '無法移除：' + errText(error) : '已移除 ' + email; await refresh();
+}
+async function saveCfg(){
+  const row = {round:Math.max(1, Number($('cRound').value) || 1), threshold:Math.min(100, Math.max(50, Number($('cTh').value) || 75)), min_votes:Math.max(1, Number($('cMin').value) || 3)};
+  const {error} = await sb.from('config').update(row).eq('id', 1);
+  $('cMsg').textContent = error ? '無法儲存：' + errText(error) : '設定已儲存'; await refresh();
+}
+function csvCell(x){ const s = String(x == null ? '' : x); return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; }
+async function exportCsv(){
+  const {data, error} = await sb.from('ballots').select('*').eq('round', S.cfg.round);
+  if (error){ $('cMsg').textContent = '無法匯出：' + errText(error); return; }
+  const rows = [['輪次','組別','編號','v1原條文','主題','條文','COR','LOE','KDIGO','有效票','棄權','同意%','結果','非常同意','同意','中立','不同意','非常不同意','委員','email','同意程度','建議COR','建議LOE','評論','修改文字','時間']];
+  const recs = [...S.recs].sort((a,b) => a.grp.localeCompare(b.grp) || a.ord - b.ord);
+  for (const r of recs){
+    const t = tally(r.id);
+    const base = [S.cfg.round, r.grp, r.code, (r.src || []).join(' '), r.topic, r.text, r.cor, r.loe, r.kdigo, t.valid, t.abstain, t.pct, t.state === 'yes' ? '達成共識' : t.state === 'no' ? '未達共識' : '票數不足', t.counts[5], t.counts[4], t.counts[3], t.counts[2], t.counts[1]];
+    const bs = (data || []).filter(b => b.rec_id === r.id);
+    if (!bs.length) rows.push(base);
+    bs.forEach(b => rows.push([...base, nameOf(b.voter_email), b.voter_email, (AGREE.find(a => a.v === b.agree) || {}).zh || '', b.cor || '', b.loe || '', b.comment, b.wording, b.updated_at]));
+  }
+  const csv = '﻿' + rows.map(r => r.map(csvCell).join(',')).join('\n');
+  const a = h('a', {href:URL.createObjectURL(new Blob([csv], {type:'text/csv'})), download:'兒童IgAN共識_第' + S.cfg.round + '輪_投票結果.csv'});
+  document.body.append(a); a.click(); a.remove(); $('cMsg').textContent = '已匯出';
+}
+
+/* ---------- boot ---------- */
+async function refresh(){
+  try { await loadAll(); banner(''); }
+  catch (err) { banner('資料讀取失敗：' + errText(err) + '。請重新整理頁面。', true); return; }
+  if (!S.me){ banner('你的帳號（' + S.email + '）不在委員名單。請聯絡召集人。', true); }
+  renderWho(); renderTabs(); renderList(); renderAdmin();
+}
+async function onSession(session){
+  if (!session){ S.email = null; showLogin(); return; }
+  S.email = (session.user.email || '').toLowerCase();
+  $('loginSec').hidden = true; $('appSec').hidden = false;
+  await refresh();
+}
+function init(){
+  fillSelect($('pGroup'), GROUPS.map(g => ({v:g.id, label:g.id + ' ' + g.zh})));
+  fillSelect($('pCor'), COR, '未定'); fillSelect($('pLoe'), LOE.map(v => ({v, label:v})), '未定');
+  $('emailForm').addEventListener('submit', sendCode);
+  $('codeForm').addEventListener('submit', verifyCode);
+  $('backEmail').addEventListener('click', () => { lsDel('igan.pendingEmail'); S.pendingEmail = null; $('codeForm').hidden = true; $('emailForm').hidden = false; });
+  $('q').addEventListener('input', e => { S.q = e.target.value.trim().toLowerCase(); renderList(); });
+  $('refresh').addEventListener('click', async () => { try { await loadSummary(); S.cards.forEach((_, id) => fillResults(id)); renderWho(); toast('統計已更新'); } catch (err) { toast('更新失敗'); } });
+  $('proposeForm').addEventListener('submit', submitProposal);
+  $('memberForm').addEventListener('submit', addMember);
+  $('cSave').addEventListener('click', saveCfg);
+  $('exportCsv').addEventListener('click', exportCsv);
+  const f = lsGet('igan.filter'); if (f) S.filter = f;
+  let last = null;
+  sb.auth.onAuthStateChange((event, session) => {
+    const key = session ? session.user.id : 'none';
+    if (key === last) return; last = key;
+    setTimeout(() => onSession(session), 0);
+  });
+  setInterval(async () => {
+    if (document.hidden || !S.email || S.filter === 'prop') return;
+    try { await loadSummary(); S.cards.forEach((_, id) => fillResults(id)); renderWho(); } catch {}
+  }, 60000);
+}
+init();
+</script>
+
+</body>
+</html>
