@@ -632,12 +632,26 @@ function buildVoteForm(r){
   const w = h('textarea', {id:pre + 'w', placeholder:'建議修改的條文文字（可空白）'}); w.value = v.wording || '';
   const msg = h('span', {class:'saved'}, saved ? '已儲存 ' + fmtTime(saved.updated_at) : '尚未投票');
   const btn = h('button', {class:'btn', type:'submit'}, saved ? '更新我的投票' : '送出投票');
+  const undo = h('button', {class:'btn ghost', type:'button', hidden: !saved}, '收回我的投票');
+  undo.addEventListener('click', async () => {
+    if (undo.dataset.confirm !== '1'){ undo.dataset.confirm = '1'; undo.textContent = '再按一次確認收回'; msg.textContent = '收回後，這一條的同意度、建議與評論都會刪除。'; return; }
+    undo.dataset.confirm = ''; undo.disabled = true; msg.textContent = '收回中…';
+    const {error} = await sb.from('ballots').delete().eq('round', S.cfg.round).eq('rec_id', r.id).eq('voter_email', S.email);
+    undo.disabled = false;
+    if (error){ msg.textContent = '無法收回：' + errText(error); undo.textContent = '收回我的投票'; return; }
+    delete S.mine[S.cfg.round + ':' + r.id]; lsDel(dk);
+    form.querySelectorAll('input[type=radio]').forEach(x => { x.checked = false; });
+    cor.value = ''; loe.value = ''; c.value = ''; w.value = '';
+    undo.hidden = true; undo.textContent = '收回我的投票'; btn.textContent = '送出投票'; msg.textContent = '已收回，這一條目前沒有你的投票。';
+    toast('已收回 ' + r.code + ' 的投票');
+    try { await loadSummary(); fillResults(r.id); renderWho(); renderTabs(); } catch {}
+  });
   form.append(h('h3', null, '我的投票'),
     isAgainst(r.cor) ? h('p', {class:'vote-hint'}, '本條是「反對使用」的建議。同意本條＝同意「' + r.text.replace(/。$/, '') + '」。') : null,
     scale,
     h('div', {class:'grid2'}, h('label', {class:'lab'}, '我建議的 COR', cor), h('label', {class:'lab'}, '我建議的 LOE', loe)),
     h('div', {class:'grid2'}, h('label', {class:'lab'}, '評論', c), h('label', {class:'lab'}, '修改文字', w)),
-    h('div', {class:'row'}, btn, msg));
+    h('div', {class:'row'}, btn, undo, msg));
   const read = () => { const sel = form.querySelector('input[name="' + pre + 'a"]:checked'); return {agree: sel ? Number(sel.value) : null, cor:cor.value, loe:loe.value, comment:c.value.trim(), wording:w.value.trim()}; };
   form.addEventListener('input', () => { lsSet(dk, read()); msg.textContent = '有未送出的修改'; });
   form.addEventListener('submit', async e => {
@@ -649,7 +663,7 @@ function buildVoteForm(r){
     btn.disabled = false;
     if (error){ msg.textContent = '無法儲存：' + errText(error); return; }
     S.mine[S.cfg.round + ':' + r.id] = data; lsDel(dk);
-    msg.textContent = '已儲存 ' + fmtTime(data.updated_at); btn.textContent = '更新我的投票'; toast('已儲存 ' + r.code + ' 的投票');
+    msg.textContent = '已儲存 ' + fmtTime(data.updated_at); btn.textContent = '更新我的投票'; undo.hidden = false; toast('已儲存 ' + r.code + ' 的投票');
     try { await loadSummary(); fillResults(r.id); renderWho(); } catch {}
   });
   return form;
