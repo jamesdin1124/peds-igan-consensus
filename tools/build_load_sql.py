@@ -23,10 +23,11 @@ def kdigo(cor: str, loe: str) -> str:
         return "1" + q
     if cor in ("IIa", "IIb"):
         return "2" + q
+    # Direction (recommend for / against) lives in the statement and the site's direction tag, not in the grade.
     if cor == "III-H":
-        return "1" + q + "（反向）"
+        return "1" + q
     if cor == "III-NB":
-        return ("1" if loe in ("A", "B-R") else "2") + q + "（反向）"
+        return ("1" if loe in ("A", "B-R") else "2") + q
     return ""
 
 

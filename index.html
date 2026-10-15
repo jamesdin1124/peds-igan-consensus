@@ -129,6 +129,17 @@ input[type=email]{width:100%}
 .ev-g.hot{background:var(--accent-soft);border-radius:6px;padding:6px 10px}
 .kd{display:inline-flex;align-items:center;gap:6px;flex-wrap:wrap}
 .kd-x{font-size:.78rem;color:var(--muted)}
+details.intro{background:var(--surface-2);border:1px solid var(--line);border-left:4px solid var(--accent);border-radius:var(--r);padding:10px 14px}
+details.intro summary{cursor:pointer;font-weight:700;color:var(--accent)}
+.intro-body{display:grid;gap:8px;margin-top:8px;font-size:.88rem;min-width:0}
+.intro-body h4{margin:6px 0 0;font-size:.9rem}
+.intro-body h5{margin:4px 0 0;font-size:.84rem;color:var(--muted)}
+.intro-body ul{margin:0;padding-left:20px}
+.intro-body li{margin:3px 0;overflow-wrap:anywhere}
+.intro-body td{overflow-wrap:anywhere;min-width:5em}
+.dir-pro{background:var(--cor1-bg);color:var(--cor1)}
+.dir-con{background:var(--cor3-bg);color:var(--cor3)}
+.vote-hint{font-size:.88rem;background:var(--cor3-bg);color:var(--ink);border-left:3px solid var(--cor3);padding:6px 10px;border-radius:4px}
 [hidden]{display:none!important}
 </style>
 </head>
@@ -172,8 +183,8 @@ input[type=email]{width:100%}
               <tr><td><span class="badge cor-I">I</span></td><td>益處 &gt;&gt;&gt; 風險</td><td>建議</td><td>1：強建議（We recommend）</td></tr>
               <tr><td><span class="badge cor-IIa">IIa</span></td><td>益處 &gt;&gt; 風險</td><td>合理</td><td>2：弱建議（We suggest）</td></tr>
               <tr><td><span class="badge cor-IIb">IIb</span></td><td>益處 ≥ 風險</td><td>可考慮</td><td>2：弱建議（We suggest）</td></tr>
-              <tr><td><span class="badge cor-III-NB">III：無益</span></td><td>益處 = 風險</td><td>不建議</td><td>2 反向（We suggest not）；LOE A／B-R 時為 1 反向</td></tr>
-              <tr><td><span class="badge cor-III-H">III：有害</span></td><td>風險 &gt; 益處</td><td>不應</td><td>1 反向（We recommend not）</td></tr>
+              <tr><td><span class="badge cor-III-NB">3：無益（No Benefit）</span></td><td>益處 = 風險</td><td>不建議</td><td>2：弱建議不使用（We suggest not）；LOE A／B-R 時為 1</td></tr>
+              <tr><td><span class="badge cor-III-H">3：有害（Harm）</span></td><td>風險 &gt; 益處</td><td>不應</td><td>1：強建議不使用（We recommend not）</td></tr>
             </tbody></table></div>
           <div class="tbl"><table>
             <thead><tr><th>證據等級 LOE</th><th>定義</th><th>KDIGO 對應</th></tr></thead>
@@ -270,14 +281,14 @@ const GROUPS = [
   {id:'G6', zh:'精準醫療與生物標記', en:'Precision Medicine & Biomarkers'},
   {id:'G7', zh:'兒童特有議題', en:'Pediatric-specific Issues'}
 ];
-const COR = [{v:'I',label:'I'},{v:'IIa',label:'IIa'},{v:'IIb',label:'IIb'},{v:'III-NB',label:'III：無益'},{v:'III-H',label:'III：有害'}];
+const COR = [{v:'I',label:'I'},{v:'IIa',label:'IIa'},{v:'IIb',label:'IIb'},{v:'III-NB',label:'3：無益（No Benefit）'},{v:'III-H',label:'3：有害（Harm）'}];
 const LOE = ['A','B-R','B-NR','C-LD','C-EO'];
 const COR_OPTS = [
   {v:'I', label:'I：建議（益處遠大於風險）｜KDIGO 1 強建議'},
   {v:'IIa', label:'IIa：合理（益處明顯大於風險）｜KDIGO 2 弱建議'},
   {v:'IIb', label:'IIb：可考慮（益處不小於風險）｜KDIGO 2 弱建議'},
-  {v:'III-NB', label:'III 無益：不建議（益處等於風險）｜KDIGO 2 反向（LOE A／B-R 時 1 反向）'},
-  {v:'III-H', label:'III 有害：不應（風險大於益處）｜KDIGO 1 反向'}
+  {v:'III-NB', label:'3 無益（No Benefit）：不建議（益處等於風險）｜KDIGO 2 建議不使用（LOE A／B-R 時為 1）'},
+  {v:'III-H', label:'3 有害（Harm）：不應（風險大於益處）｜KDIGO 1 強建議不使用'}
 ];
 const LOE_OPTS = [
   {v:'A', label:'A：≥1 個高品質 RCT，或高品質 RCT 的統合分析｜KDIGO A（高）'},
@@ -290,7 +301,7 @@ const optLabel = (opts, v) => { const o = opts.find(x => x.v === v); return o ? 
 const AGREE = [{v:5,zh:'非常同意',c:'--l5'},{v:4,zh:'同意',c:'--l4'},{v:3,zh:'中立',c:'--l3'},{v:2,zh:'不同意',c:'--l2'},{v:1,zh:'非常不同意',c:'--l1'},{v:0,zh:'棄權',c:null}];
 const STATUS = {voting:'投票中', draft:'草稿', consensus:'已定案', withdrawn:'撤回'};
 
-const S = {email:null, me:null, admin:false, recs:[], mine:{}, summary:{}, proposals:[], members:[], cfg:{round:1, threshold:75, min_votes:3}, filter:'all', q:'', cards:new Map(), pendingEmail:null};
+const S = {email:null, me:null, admin:false, recs:[], mine:{}, summary:{}, proposals:[], members:[], cfg:{round:1, threshold:75, min_votes:3}, intros:{}, filter:'all', q:'', cards:new Map(), pendingEmail:null};
 
 const $ = id => document.getElementById(id);
 function h(tag, attrs, ...kids){
@@ -311,15 +322,20 @@ function lsSet(k, v){ try { localStorage.setItem(k, JSON.stringify(v)); } catch 
 function lsDel(k){ try { localStorage.removeItem(k); } catch {} }
 function corBadge(v){ const c = COR.find(x => x.v === v); return c ? h('span', {class:'badge cor-' + v, title:'推薦等級'}, 'COR ' + c.label) : null; }
 function loeBadge(v){ return v ? h('span', {class:'badge loe', title:'證據等級'}, 'LOE ' + v) : null; }
-function kdigoExplain(v){
+const isAgainst = cor => /^III/.test(cor || '');
+function dirBadge(cor){
+  if (!cor) return null;
+  return isAgainst(cor) ? h('span', {class:'badge dir-con', title:'本條建議不要做這件事'}, '▼ 反對使用') : h('span', {class:'badge dir-pro', title:'本條建議做這件事'}, '▲ 支持使用');
+}
+function kdigoExplain(v, cor){
   if (!v) return '';
-  if (v === 'PP') return 'Practice Point：專家意見，不分級';
-  const m = /^([12])([ABCD])(（反向）)?$/.exec(v); if (!m) return '';
+  const m = /^([12])([ABCD])/.exec(v);
+  if (v === 'PP' || !m) return 'Practice Point：專家意見，不分級' + (isAgainst(cor) ? '（建議不使用）' : '');
   const q = {A:'高', B:'中', C:'低', D:'極低'}[m[2]];
-  const st = m[3] ? (m[1] === '1' ? '強烈反對（We recommend not）' : '反對（We suggest not）') : (m[1] === '1' ? '強建議（We recommend）' : '弱建議（We suggest）');
+  const st = isAgainst(cor) ? (m[1] === '1' ? '強建議不使用（We recommend not）' : '弱建議不使用（We suggest not）') : (m[1] === '1' ? '強建議使用（We recommend）' : '弱建議使用（We suggest）');
   return st + '・證據品質' + q;
 }
-function kdigoBadge(v){ return v ? h('span', {class:'kd'}, h('span', {class:'badge loe', title:kdigoExplain(v)}, 'KDIGO ' + v), h('span', {class:'kd-x'}, kdigoExplain(v))) : null; }
+function kdigoBadge(v, cor){ if (!v) return null; const g = String(v).replace('（反向）', ''); return h('span', {class:'kd'}, h('span', {class:'badge loe', title:kdigoExplain(g, cor)}, 'KDIGO ' + g), h('span', {class:'kd-x'}, kdigoExplain(g, cor))); }
 function groupOf(id){ return GROUPS.find(g => g.id === id) || {id, zh:id, en:''}; }
 function fmtTime(iso){ if (!iso) return ''; const d = new Date(iso); return (d.getMonth()+1) + '/' + d.getDate() + ' ' + String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0'); }
 function fillSelect(sel, opts, blank){ sel.replaceChildren(); if (blank) sel.append(h('option', {value:''}, blank)); opts.forEach(o => sel.append(h('option', {value:o.v}, o.label))); }
@@ -370,14 +386,16 @@ async function signOut(){ await sb.auth.signOut(); location.reload(); }
 
 /* ---------- data ---------- */
 async function loadAll(){
-  const [cfg, recs, mine, props, mem] = await Promise.all([
+  const [cfg, recs, mine, props, mem, intr] = await Promise.all([
     sb.from('config').select('*').eq('id', 1).maybeSingle(),
     sb.from('recs').select('*').order('grp').order('ord'),
     sb.from('ballots').select('*').eq('voter_email', S.email),
     sb.from('proposals').select('*').order('created_at'),
-    sb.from('members').select('*').order('added_at')
+    sb.from('members').select('*').order('added_at'),
+    sb.from('intros').select('id,content')
   ]);
   for (const r of [cfg, recs, mine, props, mem]) if (r.error) throw r.error;
+  S.intros = {}; if (!intr.error) (intr.data || []).forEach(x => { S.intros[x.id] = x.content; });
   if (cfg.data) S.cfg = cfg.data;
   S.recs = recs.data || [];
   S.mine = {}; (mine.data || []).forEach(b => { S.mine[b.round + ':' + b.rec_id] = b; });
@@ -438,11 +456,56 @@ function renderList(){
   const recs = visibleRecs().filter(matches).sort((a,b) => a.grp.localeCompare(b.grp) || a.ord - b.ord);
   if (!S.recs.length){ list.append(h('div', {class:'empty'}, '目前還沒有條文。管理者載入後就會出現。')); return; }
   if (!recs.length){ list.append(h('div', {class:'empty'}, '沒有符合篩選條件的條文。')); return; }
+  if (S.filter === 'all' && !S.q && S.intros.global) list.append(renderGlobalIntro(S.intros.global));
   let cur = null;
   for (const r of recs){
-    if (r.grp !== cur){ cur = r.grp; const g = groupOf(cur); list.append(h('div', {class:'group-h'}, h('h2', null, g.id + '　' + g.zh), h('span', {class:'en'}, g.en))); }
+    if (r.grp !== cur){
+      cur = r.grp; const g = groupOf(cur);
+      list.append(h('div', {class:'group-h'}, h('h2', null, g.id + '　' + g.zh), h('span', {class:'en'}, g.en)));
+      if (!S.q && S.intros[cur]) list.append(renderGroupIntro(cur, S.intros[cur]));
+    }
     list.append(buildCard(r));
   }
+}
+/* ---------- intros ---------- */
+function codeLink(code){
+  const r = S.recs.find(x => x.code === code);
+  return r ? h('a', {href:'#rec-' + r.id, class:'mono'}, code) : h('span', {class:'mono'}, code);
+}
+function codeLinks(codes){ const arr = (codes || []).filter(Boolean); if (!arr.length) return null; const out = [' （條文 ']; arr.forEach((c, i) => { if (i) out.push('、'); out.push(codeLink(c)); }); out.push('）'); return out; }
+function introPanel(key, title, body){
+  const k = 'igan.intro.' + key; const saved = lsGet(k);
+  const d = h('details', {class:'intro', open: saved === false ? null : true}, h('summary', null, title), h('div', {class:'intro-body'}, body));
+  d.addEventListener('toggle', () => lsSet(k, d.open));
+  return d;
+}
+function tableOf(head, rows){
+  return h('div', {class:'tbl'}, h('table', null, h('thead', null, h('tr', null, head.map(x => h('th', null, x)))), h('tbody', null, rows.map(r => h('tr', null, r.map(c => h('td', null, c)))))));
+}
+function twTable(rows){
+  return tableOf(['項目', 'TFDA 許可證', '健保給付', '兒童 IgAN', '相關條文', '來源'], rows.map(x => [
+    h('b', null, x.item || ''), x.tfda || '', x.nhi || '', x.pediatric || '', (x.codes || []).length ? h('span', null, ...codeLinks(x.codes).slice(1, -1)) : '', linkify(x.source || '')]));
+}
+function renderGlobalIntro(gl){
+  const body = [];
+  if ((gl.keyMessages || []).length) body.push(h('h4', null, '全書重點'), h('ul', null, gl.keyMessages.map(x => h('li', null, linkify(x)))));
+  const rows = gl.quickTable || [];
+  if (rows.length){
+    const cats = [...new Set(rows.map(x => x.category || '其他'))];
+    body.push(h('h4', null, '台灣藥政與健保速覽'));
+    cats.forEach(c => body.push(h('h5', null, c), twTable(rows.filter(x => (x.category || '其他') === c))));
+  }
+  return introPanel('global', '導讀：各國指引方向與台灣藥政、健保速覽', body);
+}
+function renderGroupIntro(grp, it){
+  const body = [];
+  if ((it.overview || []).length) body.push(h('h4', null, '大方向'), h('ul', null, it.overview.map(x => h('li', null, linkify(x)))));
+  if ((it.agree || []).length) body.push(h('h4', null, '各指引較一致之處'), h('ul', null, it.agree.map(x => h('li', null, x.point, h('span', {class:'muted'}, '（' + (x.guidelines || '') + '）'), codeLinks(x.codes)))));
+  if ((it.diverge || []).length) body.push(h('h4', null, '分歧之處'), tableOf(['議題', 'IPNA 2025', 'KDIGO 2025', 'JSPN 2020', '中國 2016', '本共識'], it.diverge.map(x => [h('b', null, x.topic || ''), x.ipna || '', x.kdigo || '', x.jspn || '', x.china || '', h('span', null, x.thisDraft || '', codeLinks(x.codes))])));
+  if ((it.taiwanTable || []).length) body.push(h('h4', null, '台灣藥政與健保'), twTable(it.taiwanTable));
+  if ((it.keyFacts || []).length) body.push(h('h4', null, '其他在地重點'), h('ul', null, it.keyFacts.map(x => h('li', null, linkify(x)))));
+  if ((it.focus || []).length) body.push(h('h4', null, '投票時先看'), h('ul', null, it.focus.map(x => h('li', null, codeLink(x.code), '：', x.why))));
+  return introPanel(grp, '本組導讀：各國指引方向、分歧與台灣現況', body);
 }
 function linkify(text){
   const frag = document.createDocumentFragment(); const s = String(text || '');
@@ -508,7 +571,7 @@ function renderEvidence(text){
 }
 function buildCard(r){
   const card = h('article', {class:'rec', id:'rec-' + r.id});
-  card.append(h('div', {class:'rec-head'}, h('span', {class:'code'}, r.code), r.topic ? h('span', {class:'topic'}, r.topic) : null, corBadge(r.cor), loeBadge(r.loe), kdigoBadge(r.kdigo),
+  card.append(h('div', {class:'rec-head'}, h('span', {class:'code'}, r.code), r.topic ? h('span', {class:'topic'}, r.topic) : null, dirBadge(r.cor), corBadge(r.cor), loeBadge(r.loe), kdigoBadge(r.kdigo, r.cor),
     r.status !== 'voting' ? h('span', {class:'chip ' + (r.status === 'consensus' ? 'ok' : '')}, STATUS[r.status] || r.status) : null));
   card.append(h('p', {class:'stmt'}, r.text));
   if (r.text_en) card.append(h('p', {class:'stmt-en'}, r.text_en));
@@ -525,7 +588,7 @@ function buildCard(r){
     card.append(h('details', {class:'more'}, h('summary', null, '實施細節 ' + det.length + ' 項（隨本條一起接受，不另投票）'),
       h('div', {class:'more-body'}, h('div', {class:'tbl'}, h('table', null,
         h('thead', null, h('tr', null, h('th', null, '原編號'), h('th', null, '內容'), h('th', null, 'COR'), h('th', null, 'LOE'))),
-        h('tbody', null, det.map(d => h('tr', null, h('td', {class:'mono'}, d.code || ''), h('td', null, d.text || ''), h('td', null, corBadge(d.cor)), h('td', null, loeBadge(d.loe))))))))));
+        h('tbody', null, det.map(d => h('tr', null, h('td', {class:'mono'}, d.code || ''), h('td', null, d.text || ''), h('td', null, isAgainst(d.cor) ? h('span', {class:'badge dir-con'}, '▼') : null, corBadge(d.cor)), h('td', null, loeBadge(d.loe))))))))));
   }
   const src = Array.isArray(r.src) ? r.src : [];
   if (src.length) card.append(h('p', {class:'topic'}, '由 v1 條文整合：' + src.join('、')));
@@ -569,7 +632,9 @@ function buildVoteForm(r){
   const w = h('textarea', {id:pre + 'w', placeholder:'建議修改的條文文字（可空白）'}); w.value = v.wording || '';
   const msg = h('span', {class:'saved'}, saved ? '已儲存 ' + fmtTime(saved.updated_at) : '尚未投票');
   const btn = h('button', {class:'btn', type:'submit'}, saved ? '更新我的投票' : '送出投票');
-  form.append(h('h3', null, '我的投票'), scale,
+  form.append(h('h3', null, '我的投票'),
+    isAgainst(r.cor) ? h('p', {class:'vote-hint'}, '本條是「反對使用」的建議。同意本條＝同意「' + r.text.replace(/。$/, '') + '」。') : null,
+    scale,
     h('div', {class:'grid2'}, h('label', {class:'lab'}, '我建議的 COR', cor), h('label', {class:'lab'}, '我建議的 LOE', loe)),
     h('div', {class:'grid2'}, h('label', {class:'lab'}, '評論', c), h('label', {class:'lab'}, '修改文字', w)),
     h('div', {class:'row'}, btn, msg));
