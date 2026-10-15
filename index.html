@@ -137,7 +137,7 @@ input[type=email]{width:100%}
   <section class="block" id="loginSec" hidden>
     <form class="panel" id="emailForm" style="max-width:440px">
       <h2>委員登入</h2>
-      <p class="muted">請輸入你提供給召集人的 email。系統會寄一封含 6 位數驗證碼的信給你。</p>
+      <p class="muted">請輸入你的 email（需事先加入委員名單）。系統會寄一封含 6 位數驗證碼的信給你。</p>
       <label class="lab" for="loginEmail">Email<input type="email" id="loginEmail" required autocomplete="email" style="font:inherit;font-size:1rem;padding:8px;border:1px solid var(--line);border-radius:6px;background:var(--surface);color:var(--ink)"></label>
       <div class="row"><button class="btn" type="submit" id="sendCode">寄驗證碼</button><span class="saved" id="emailMsg"></span></div>
     </form>
@@ -200,7 +200,7 @@ input[type=email]{width:100%}
     <section class="block">
       <h2>提出新條文</h2>
       <form class="panel" id="proposeForm">
-        <p class="muted">你提出的條文會出現在「委員提案」分頁。召集人審閱後，可以採納為正式投票條文。</p>
+        <p class="muted">你提出的條文會出現在「委員提案」分頁。網站管理者會在會議討論後，採納為正式投票條文。</p>
         <div class="grid2">
           <label class="lab">組別<select id="pGroup"></select></label>
           <label class="lab">主題（短）<input type="text" id="pTopic" placeholder="例：扁桃腺切除"></label>
@@ -214,7 +214,7 @@ input[type=email]{width:100%}
     </section>
 
     <section class="block" id="adminSec" hidden>
-      <h2>召集人管理</h2>
+      <h2>網站管理</h2>
       <div class="panel">
         <h3>委員名單</h3>
         <p class="muted">只有名單內的 email 可以登入。新增後，請用 LINE 把網址傳給該委員。</p>
@@ -222,7 +222,7 @@ input[type=email]{width:100%}
         <form class="grid2" id="memberForm">
           <label class="lab">Email<input type="text" id="mEmail" required placeholder="name@hospital.org"></label>
           <label class="lab">顯示姓名<input type="text" id="mName" required placeholder="例：田祐霖"></label>
-          <label class="lab">角色<select id="mRole"><option value="voter">委員</option><option value="admin">召集人</option></select></label>
+          <label class="lab">角色<select id="mRole"><option value="voter">委員</option><option value="admin">管理者</option></select></label>
           <div class="lab"><span>&nbsp;</span><button class="btn" type="submit">新增委員</button></div>
         </form>
         <span class="saved" id="memberMsg"></span>
@@ -301,7 +301,7 @@ async function sendCode(e){
   try {
     const {data:ok, error} = await sb.rpc('is_allowed_email', {p_email:email});
     if (error) throw error;
-    if (!ok){ msg.textContent = '這個 email 不在委員名單。請聯絡召集人加入。'; return; }
+    if (!ok){ msg.textContent = '這個 email 不在委員名單。請聯絡網站管理者（丁肇壯醫師）加入。'; return; }
     msg.textContent = '寄送中…';
     const {error:e2} = await sb.auth.signInWithOtp({email, options:{shouldCreateUser:true, emailRedirectTo: location.origin + location.pathname}});
     if (e2) throw e2;
@@ -379,7 +379,7 @@ function renderWho(){
   w.append(h('span', {class:'chip ' + (done === active.length && active.length ? 'ok' : '')}, '我已投 ' + done + ' / ' + active.length + ' 條'));
   w.append(h('span', {class:'chip ok'}, '達共識 ' + active.filter(r => tally(r.id).state === 'yes').length + ' 條'));
   w.append(h('span', {class:'chip'}, (S.me && S.me.display_name) || S.email));
-  if (S.admin) w.append(h('span', {class:'chip'}, '召集人'));
+  if (S.admin) w.append(h('span', {class:'chip'}, '管理者'));
   w.append(h('button', {class:'btn ghost', type:'button', style:'padding:1px 10px;font-size:.78rem', onclick:signOut}, '登出'));
   $('ruleLine').textContent = '同意比例 ≥ ' + S.cfg.threshold + '%，且有效票 ≥ ' + S.cfg.min_votes + ' 票，該條達成共識。';
 }
@@ -403,7 +403,7 @@ function renderList(){
   if (S.filter === 'prop'){ renderProposals(); return; }
   list.replaceChildren(); S.cards.clear();
   const recs = visibleRecs().filter(matches).sort((a,b) => a.grp.localeCompare(b.grp) || a.ord - b.ord);
-  if (!S.recs.length){ list.append(h('div', {class:'empty'}, '目前還沒有條文。召集人載入後就會出現。')); return; }
+  if (!S.recs.length){ list.append(h('div', {class:'empty'}, '目前還沒有條文。管理者載入後就會出現。')); return; }
   if (!recs.length){ list.append(h('div', {class:'empty'}, '沒有符合篩選條件的條文。')); return; }
   let cur = null;
   for (const r of recs){
@@ -549,7 +549,7 @@ function renderAdmin(){
   const tb = $('memberRows'); tb.replaceChildren();
   S.members.forEach(m => {
     const voted = S.recs.filter(r => r.status === 'voting').length;
-    tb.append(h('tr', null, h('td', {class:'mono'}, m.email), h('td', null, m.display_name), h('td', null, m.role === 'admin' ? '召集人' : '委員'),
+    tb.append(h('tr', null, h('td', {class:'mono'}, m.email), h('td', null, m.display_name), h('td', null, m.role === 'admin' ? '委員（管理者）' : '委員'),
       h('td', {class:'mono', 'data-email':m.email}, '—'),
       h('td', null, m.email === S.email ? '' : h('button', {class:'btn ghost', type:'button', style:'padding:1px 10px', onclick:() => removeMember(m.email)}, '移除'))));
   });
@@ -603,7 +603,7 @@ async function exportCsv(){
 async function refresh(){
   try { await loadAll(); banner(''); }
   catch (err) { banner('資料讀取失敗：' + errText(err) + '。請重新整理頁面。', true); return; }
-  if (!S.me){ banner('你的帳號（' + S.email + '）不在委員名單。請聯絡召集人。', true); }
+  if (!S.me){ banner('你的帳號（' + S.email + '）不在委員名單。請聯絡網站管理者（丁肇壯醫師）。', true); }
   renderWho(); renderTabs(); renderList(); renderAdmin();
 }
 async function onSession(session){
