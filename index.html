@@ -119,6 +119,14 @@ details.more summary{cursor:pointer;font-size:.85rem;color:var(--accent)}
 
 body{margin:0}
 input[type=email]{width:100%}
+.ev{display:grid;gap:8px}
+.ev-g h5{margin:0 0 2px;font-size:.84rem;font-weight:700;color:var(--ink)}
+.ev-g ul{margin:0;padding-left:20px}
+.ev-g li{margin:3px 0;line-height:1.6;overflow-wrap:anywhere}
+.more-body,.ev,.tw{min-width:0}
+.more-body a{overflow-wrap:anywhere}
+.ev-g li b{font-weight:600}
+.ev-g.hot{background:var(--accent-soft);border-radius:6px;padding:6px 10px}
 [hidden]{display:none!important}
 </style>
 </head>
@@ -423,6 +431,56 @@ function linkify(text){
   }
   frag.append(s.slice(last)); return frag;
 }
+/* Split evidence prose into labelled groups of bullet items (pure functions, shared by page and test). */
+function splitSentences(text){
+  const out = []; let buf = '', depth = 0;
+  const open = '([（【「', close = ')]）】」';
+  for (const ch of String(text || '')){
+    if (open.includes(ch)) depth++;
+    else if (close.includes(ch)) depth = Math.max(0, depth - 1);
+    buf += ch;
+    if (depth === 0 && (ch === '。' || ch === '；')){ const s = buf.trim(); if (s.replace(/[。；]/g, '')) out.push(s.replace(/；$/, '')); buf = ''; }
+  }
+  if (buf.trim()) out.push(buf.trim());
+  return out;
+}
+function splitLabel(s){
+  const m = /^([^：:。；\[\]（）()]{1,20})[：:](.+)$/s.exec(s);
+  return m ? {label:m[1].trim(), rest:m[2].trim()} : null;
+}
+/* Returns [{title, items:[{label, text}]}]. Labels that contain a 4-digit year (IPNA 2025, KDIGO 2025 …) stay inline inside the current group. */
+function groupEvidence(text){
+  const groups = []; let cur = null;
+  const push = (title) => { cur = {title, items:[]}; groups.push(cur); };
+  for (const para of String(text || '').split(/\n+/)){
+    if (!para.trim()) continue;
+    let paraStarted = false;
+    for (const s of splitSentences(para)){
+      const lab = splitLabel(s);
+      if (lab && !/\d{4}/.test(lab.label) && (!paraStarted || para.indexOf('\n') === -1)){
+        push(lab.label);
+        const inner = splitLabel(lab.rest);
+        if (lab.rest) cur.items.push(inner && /\d{4}/.test(inner.label) ? {label:inner.label, text:inner.rest} : {label:'', text:lab.rest});
+      } else {
+        if (!cur) push('');
+        cur.items.push(lab && /\d{4}/.test(lab.label) ? {label:lab.label, text:lab.rest} : {label:'', text:s});
+      }
+      paraStarted = true;
+    }
+  }
+  return groups.filter(g => g.items.length || g.title);
+}
+function renderEvidence(text){
+  const wrap = h('div', {class:'ev'});
+  for (const g of groupEvidence(text)){
+    const hot = /待討論|田祐霖/.test(g.title);
+    const box = h('div', {class:'ev-g' + (hot ? ' hot' : '')});
+    if (g.title) box.append(h('h5', null, g.title));
+    if (g.items.length) box.append(h('ul', null, g.items.map(i => h('li', null, i.label ? h('b', null, i.label + '：') : null, linkify(i.text)))));
+    wrap.append(box);
+  }
+  return wrap;
+}
 function buildCard(r){
   const card = h('article', {class:'rec', id:'rec-' + r.id});
   card.append(h('div', {class:'rec-head'}, h('span', {class:'code'}, r.code), r.topic ? h('span', {class:'topic'}, r.topic) : null, corBadge(r.cor), loeBadge(r.loe), kdigoBadge(r.kdigo),
@@ -432,8 +490,8 @@ function buildCard(r){
   const refs = Array.isArray(r.refs) ? r.refs : [];
   if (r.taiwan || r.rationale || refs.length){
     const body = h('div', {class:'more-body'});
-    if (r.taiwan) body.append(h('div', {class:'tw'}, h('h4', null, '台灣在地資料'), h('p', null, linkify(r.taiwan))));
-    if (r.rationale) body.append(h('div', null, h('h4', null, '依據、國際指引對照與待討論'), ...String(r.rationale).split('\n').map(p => h('p', null, linkify(p)))));
+    if (r.taiwan) body.append(h('div', {class:'tw'}, h('h4', null, '台灣在地資料'), renderEvidence(r.taiwan)));
+    if (r.rationale) body.append(h('div', null, h('h4', null, '依據、國際指引對照與待討論'), renderEvidence(r.rationale)));
     if (refs.length) body.append(h('div', null, h('h4', null, '參考文獻'), h('ol', {class:'refs'}, refs.map(x => h('li', null, linkify(x))))));
     card.append(h('details', {class:'more'}, h('summary', null, '證據、台灣資料與文獻'), body));
   }
