@@ -509,12 +509,15 @@ function renderGroupIntro(grp, it){
 }
 function linkify(text){
   const frag = document.createDocumentFragment(); const s = String(text || '');
-  const re = /(PMID[:\s]*)(\d{6,9})|(doi[:\s]*)(10\.\S+[^\s.,;)\]])|(https?:\/\/[^\s\]）)]+)/gi; let last = 0, m;
+  const re = /(PMID[:\s]*)(\d{6,9})|(doi[:\s]*)(10\.\S+[^\s.,;)\]])|(https?:\/\/[^\s\]）)]+)|\b(U\d{1,2})\b/gi; let last = 0, m;
+  const uc = (S.intros && S.intros.global && S.intros.global.urlCodes) || {};
   while ((m = re.exec(s))){
     frag.append(s.slice(last, m.index));
     if (m[2]) frag.append(m[1], h('a', {href:'https://pubmed.ncbi.nlm.nih.gov/' + m[2] + '/', target:'_blank', rel:'noopener'}, m[2]));
     else if (m[4]) frag.append(m[3], h('a', {href:'https://doi.org/' + m[4], target:'_blank', rel:'noopener'}, m[4]));
-    else frag.append(h('a', {href:m[5], target:'_blank', rel:'noopener'}, m[5].length > 60 ? m[5].slice(0, 57) + '…' : m[5]));
+    else if (m[5]) frag.append(h('a', {href:m[5], target:'_blank', rel:'noopener'}, m[5].length > 60 ? m[5].slice(0, 57) + '…' : m[5]));
+    else if (uc[m[6].toUpperCase()]) frag.append(h('a', {href:uc[m[6].toUpperCase()].url, target:'_blank', rel:'noopener', title:uc[m[6].toUpperCase()].name}, m[6]));
+    else frag.append(m[6]);
     last = re.lastIndex;
   }
   frag.append(s.slice(last)); return frag;
