@@ -238,7 +238,13 @@ otp_expiry = 3600
 # admin_email = "admin@email.com"
 # sender_name = "Admin"
 
-# (templates are pushed after custom SMTP is configured; see config.with_templates.toml)
+[auth.email.template.magic_link]
+subject = "兒童 IgAN 共識投票：登入驗證碼 {{ .Token }}"
+content_path = "./supabase/templates/otp.html"
+
+[auth.email.template.confirmation]
+subject = "兒童 IgAN 共識投票：登入驗證碼 {{ .Token }}"
+content_path = "./supabase/templates/otp.html"
 
 # Uncomment to customize email template
 # [auth.email.template.invite]
