@@ -202,7 +202,8 @@ details.intro summary{cursor:pointer;font-weight:700;color:var(--accent)}
               <tr><td id="ruleLine">同意比例 ≥ 75%，且有效票 ≥ 3 票，該條達成共識。</td></tr>
               <tr><td>「實施細節」隨核心條文一起接受，不另投票。對細節有意見，請寫在評論欄並註明原編號。</td></tr>
               <tr><td>有利益衝突或不熟悉該主題，請選「棄權」。棄權不計入分母。</td></tr>
-              <tr><td>評論會顯示你的姓名。個人的同意程度不公開，只顯示統計。</td></tr>
+              <tr><td>第 1 輪盲投：管理者公布結果前，委員看不到統計與其他委員的評論。</td></tr>
+              <tr><td>結果公布後，評論會顯示你的姓名。個人的同意程度不公開，只顯示統計。</td></tr>
             </tbody></table></div>
         </div>
       </details>
@@ -212,7 +213,7 @@ details.intro summary{cursor:pointer;font-weight:700;color:var(--accent)}
       <div class="tabs" id="tabs" role="toolbar" aria-label="依組別篩選"></div>
       <div class="row">
         <input type="text" id="q" class="grow" placeholder="搜尋條文、主題、v1 編號或文獻" aria-label="搜尋條文">
-        <button class="btn ghost" id="refresh" type="button">更新統計</button>
+        <button class="btn ghost" id="refresh" type="button">重新整理</button>
       </div>
     </div>
 
@@ -254,6 +255,7 @@ details.intro summary{cursor:pointer;font-weight:700;color:var(--accent)}
           <label class="lab">目前輪次<input type="number" id="cRound" min="1" max="9"></label>
           <label class="lab">共識門檻（同意 %）<input type="number" id="cTh" min="50" max="100"></label>
           <label class="lab">最少有效票數<input type="number" id="cMin" min="1" max="50"></label>
+          <label class="lab" style="align-content:end"><span><input type="checkbox" id="cPub"> 公布本輪結果給所有委員</span></label>
         </div>
         <div class="row">
           <button class="btn" id="cSave" type="button">儲存設定</button>
@@ -405,6 +407,11 @@ async function loadAll(){
   S.admin = !!(S.me && S.me.role === 'admin');
   await loadSummary();
 }
+async function reloadCfgAndSummary(){
+  const {data} = await sb.from('config').select('*').eq('id', 1).maybeSingle();
+  if (data){ const roundChanged = data.round !== S.cfg.round; S.cfg = data; if (roundChanged){ await refresh(); return; } }
+  await loadSummary(); S.cards.forEach((_, id) => fillResults(id)); renderWho();
+}
 async function loadSummary(){
   const {data, error} = await sb.rpc('round_summary', {p_round:S.cfg.round});
   if (error) throw error;
@@ -428,7 +435,9 @@ function renderWho(){
   const active = S.recs.filter(r => r.status === 'voting');
   const done = active.filter(r => myBallot(r.id)).length;
   w.append(h('span', {class:'chip ' + (done === active.length && active.length ? 'ok' : '')}, '我已投 ' + done + ' / ' + active.length + ' 條'));
-  w.append(h('span', {class:'chip ok'}, '達共識 ' + active.filter(r => tally(r.id).state === 'yes').length + ' 條'));
+  if (resultsHidden()) w.append(h('span', {class:'chip'}, '第 ' + S.cfg.round + ' 輪盲投中'));
+  else w.append(h('span', {class:'chip ok'}, '達共識 ' + active.filter(r => tally(r.id).state === 'yes').length + ' 條'));
+  if (S.admin && !S.cfg.results_public) w.append(h('span', {class:'chip warn'}, '結果未公布'));
   w.append(h('span', {class:'chip'}, (S.me && S.me.display_name) || S.email));
   if (S.admin) w.append(h('span', {class:'chip'}, '管理者'));
   w.append(h('button', {class:'btn ghost', type:'button', style:'padding:1px 10px;font-size:.78rem', onclick:signOut}, '登出'));
@@ -603,9 +612,15 @@ function buildCard(r){
   fillResults(r.id);
   return card;
 }
+function resultsHidden(){ return !S.cfg.results_public && !S.admin; }
 function fillResults(recId){
   const c = S.cards.get(recId); if (!c) return;
+  if (resultsHidden()){
+    c.results.replaceChildren(h('div', {class:'muted'}, '第 ' + S.cfg.round + ' 輪盲投中：統計與其他委員的評論，會在管理者公布後顯示。'));
+    c.comments.replaceChildren(); return;
+  }
   const t = tally(recId); const box = c.results; box.replaceChildren();
+  if (S.admin && !S.cfg.results_public) box.append(h('div', {class:'saved'}, '尚未公布：這些統計目前只有管理者看得到。'));
   const chip = t.state === 'yes' ? h('span', {class:'chip ok'}, '達成共識') : t.state === 'no' ? h('span', {class:'chip bad'}, '未達共識') : h('span', {class:'chip'}, '有效票未足 ' + S.cfg.min_votes + ' 票');
   box.append(h('div', {class:'row'}, h('b', null, '第 ' + S.cfg.round + ' 輪結果'), chip, h('span', {class:'mono'}, '同意 ' + t.pct + '%'), h('span', {class:'muted mono'}, '有效 ' + t.valid + ' 票' + (t.abstain ? ' · 棄權 ' + t.abstain : ''))));
   const bar = h('div', {class:'bar', role:'img', 'aria-label':'同意程度分布'});
@@ -718,7 +733,7 @@ function renderAdmin(){
       h('td', {class:'mono', 'data-email':m.email}, '—'),
       h('td', null, m.email === S.email ? '' : h('button', {class:'btn ghost', type:'button', style:'padding:1px 10px', onclick:() => removeMember(m.email)}, '移除'))));
   });
-  if (!['cRound','cTh','cMin'].includes(document.activeElement && document.activeElement.id)){ $('cRound').value = S.cfg.round; $('cTh').value = S.cfg.threshold; $('cMin').value = S.cfg.min_votes; }
+  if (!['cRound','cTh','cMin'].includes(document.activeElement && document.activeElement.id)){ $('cRound').value = S.cfg.round; $('cPub').checked = !!S.cfg.results_public; $('cTh').value = S.cfg.threshold; $('cMin').value = S.cfg.min_votes; }
   fillVotedCounts();
 }
 async function fillVotedCounts(){
@@ -742,7 +757,7 @@ async function removeMember(email){
   msg.textContent = error ? '無法移除：' + errText(error) : '已移除 ' + email; await refresh();
 }
 async function saveCfg(){
-  const row = {round:Math.max(1, Number($('cRound').value) || 1), threshold:Math.min(100, Math.max(50, Number($('cTh').value) || 75)), min_votes:Math.max(1, Number($('cMin').value) || 3)};
+  const row = {round:Math.max(1, Number($('cRound').value) || 1), threshold:Math.min(100, Math.max(50, Number($('cTh').value) || 75)), min_votes:Math.max(1, Number($('cMin').value) || 3), results_public:$('cPub').checked};
   const {error} = await sb.from('config').update(row).eq('id', 1);
   $('cMsg').textContent = error ? '無法儲存：' + errText(error) : '設定已儲存'; await refresh();
 }
@@ -784,7 +799,7 @@ function init(){
   $('codeForm').addEventListener('submit', verifyCode);
   $('backEmail').addEventListener('click', () => { lsDel('igan.pendingEmail'); S.pendingEmail = null; $('codeForm').hidden = true; $('emailForm').hidden = false; });
   $('q').addEventListener('input', e => { S.q = e.target.value.trim().toLowerCase(); renderList(); });
-  $('refresh').addEventListener('click', async () => { try { await loadSummary(); S.cards.forEach((_, id) => fillResults(id)); renderWho(); toast('統計已更新'); } catch (err) { toast('更新失敗'); } });
+  $('refresh').addEventListener('click', async () => { try { await reloadCfgAndSummary(); toast('已更新'); } catch (err) { toast('更新失敗'); } });
   $('proposeForm').addEventListener('submit', submitProposal);
   $('memberForm').addEventListener('submit', addMember);
   $('cSave').addEventListener('click', saveCfg);
@@ -798,7 +813,7 @@ function init(){
   });
   setInterval(async () => {
     if (document.hidden || !S.email || S.filter === 'prop') return;
-    try { await loadSummary(); S.cards.forEach((_, id) => fillResults(id)); renderWho(); } catch {}
+    try { await reloadCfgAndSummary(); } catch {}
   }, 60000);
 }
 init();
