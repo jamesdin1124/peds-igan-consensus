@@ -127,6 +127,8 @@ input[type=email]{width:100%}
 .more-body a{overflow-wrap:anywhere}
 .ev-g li b{font-weight:600}
 .ev-g.hot{background:var(--accent-soft);border-radius:6px;padding:6px 10px}
+.kd{display:inline-flex;align-items:center;gap:6px;flex-wrap:wrap}
+.kd-x{font-size:.78rem;color:var(--muted)}
 [hidden]{display:none!important}
 </style>
 </head>
@@ -167,19 +169,19 @@ input[type=email]{width:100%}
           <div class="tbl"><table>
             <thead><tr><th>推薦等級 COR</th><th>定義</th><th>用語</th><th>KDIGO 對應</th></tr></thead>
             <tbody>
-              <tr><td><span class="badge cor-I">I</span></td><td>益處 &gt;&gt;&gt; 風險</td><td>建議</td><td>1（We recommend）</td></tr>
-              <tr><td><span class="badge cor-IIa">IIa</span></td><td>益處 &gt;&gt; 風險</td><td>合理</td><td>2（We suggest）</td></tr>
-              <tr><td><span class="badge cor-IIb">IIb</span></td><td>益處 ≥ 風險</td><td>可考慮</td><td>2（We suggest）</td></tr>
-              <tr><td><span class="badge cor-III-NB">III：無益</span></td><td>益處 = 風險</td><td>不建議</td><td>1 或 2（recommend/suggest not）</td></tr>
-              <tr><td><span class="badge cor-III-H">III：有害</span></td><td>風險 &gt; 益處</td><td>不應</td><td>1（recommend not）</td></tr>
+              <tr><td><span class="badge cor-I">I</span></td><td>益處 &gt;&gt;&gt; 風險</td><td>建議</td><td>1：強建議（We recommend）</td></tr>
+              <tr><td><span class="badge cor-IIa">IIa</span></td><td>益處 &gt;&gt; 風險</td><td>合理</td><td>2：弱建議（We suggest）</td></tr>
+              <tr><td><span class="badge cor-IIb">IIb</span></td><td>益處 ≥ 風險</td><td>可考慮</td><td>2：弱建議（We suggest）</td></tr>
+              <tr><td><span class="badge cor-III-NB">III：無益</span></td><td>益處 = 風險</td><td>不建議</td><td>2 反向（We suggest not）；LOE A／B-R 時為 1 反向</td></tr>
+              <tr><td><span class="badge cor-III-H">III：有害</span></td><td>風險 &gt; 益處</td><td>不應</td><td>1 反向（We recommend not）</td></tr>
             </tbody></table></div>
           <div class="tbl"><table>
             <thead><tr><th>證據等級 LOE</th><th>定義</th><th>KDIGO 對應</th></tr></thead>
             <tbody>
-              <tr><td><span class="badge loe">A</span></td><td>高品質 RCT 或其統合分析</td><td>A</td></tr>
-              <tr><td><span class="badge loe">B-R</span></td><td>中等品質 RCT</td><td>B</td></tr>
-              <tr><td><span class="badge loe">B-NR</span></td><td>設計良好的非隨機、觀察性、登錄研究</td><td>C</td></tr>
-              <tr><td><span class="badge loe">C-LD</span></td><td>有限制的研究或資料有限</td><td>D</td></tr>
+              <tr><td><span class="badge loe">A</span></td><td>高品質 RCT 或其統合分析</td><td>A（證據品質高）</td></tr>
+              <tr><td><span class="badge loe">B-R</span></td><td>中等品質 RCT</td><td>B（中）</td></tr>
+              <tr><td><span class="badge loe">B-NR</span></td><td>設計良好的非隨機、觀察性、登錄研究</td><td>C（低）</td></tr>
+              <tr><td><span class="badge loe">C-LD</span></td><td>有限制的研究或資料有限</td><td>D（極低）</td></tr>
               <tr><td><span class="badge loe">C-EO</span></td><td>專家意見</td><td>Practice Point（不分級）</td></tr>
             </tbody></table></div>
           <div class="tbl"><table>
@@ -271,18 +273,18 @@ const GROUPS = [
 const COR = [{v:'I',label:'I'},{v:'IIa',label:'IIa'},{v:'IIb',label:'IIb'},{v:'III-NB',label:'III：無益'},{v:'III-H',label:'III：有害'}];
 const LOE = ['A','B-R','B-NR','C-LD','C-EO'];
 const COR_OPTS = [
-  {v:'I', label:'I：建議（益處遠大於風險）'},
-  {v:'IIa', label:'IIa：合理（益處明顯大於風險）'},
-  {v:'IIb', label:'IIb：可考慮（益處不小於風險）'},
-  {v:'III-NB', label:'III 無益：不建議（益處等於風險）'},
-  {v:'III-H', label:'III 有害：不應（風險大於益處）'}
+  {v:'I', label:'I：建議（益處遠大於風險）｜KDIGO 1 強建議'},
+  {v:'IIa', label:'IIa：合理（益處明顯大於風險）｜KDIGO 2 弱建議'},
+  {v:'IIb', label:'IIb：可考慮（益處不小於風險）｜KDIGO 2 弱建議'},
+  {v:'III-NB', label:'III 無益：不建議（益處等於風險）｜KDIGO 2 反向（LOE A／B-R 時 1 反向）'},
+  {v:'III-H', label:'III 有害：不應（風險大於益處）｜KDIGO 1 反向'}
 ];
 const LOE_OPTS = [
-  {v:'A', label:'A：≥1 個高品質 RCT，或高品質 RCT 的統合分析'},
-  {v:'B-R', label:'B-R：≥1 個中等品質 RCT（隨機）'},
-  {v:'B-NR', label:'B-NR：設計良好的非隨機、觀察性或登錄研究'},
-  {v:'C-LD', label:'C-LD：有設計限制的研究，或資料有限'},
-  {v:'C-EO', label:'C-EO：專家意見（臨床經驗共識）'}
+  {v:'A', label:'A：≥1 個高品質 RCT，或高品質 RCT 的統合分析｜KDIGO A（高）'},
+  {v:'B-R', label:'B-R：≥1 個中等品質 RCT（隨機）｜KDIGO B（中）'},
+  {v:'B-NR', label:'B-NR：設計良好的非隨機、觀察性或登錄研究｜KDIGO C（低）'},
+  {v:'C-LD', label:'C-LD：有設計限制的研究，或資料有限｜KDIGO D（極低）'},
+  {v:'C-EO', label:'C-EO：專家意見（臨床經驗共識）｜KDIGO PP（不分級）'}
 ];
 const optLabel = (opts, v) => { const o = opts.find(x => x.v === v); return o ? o.label : v; };
 const AGREE = [{v:5,zh:'非常同意',c:'--l5'},{v:4,zh:'同意',c:'--l4'},{v:3,zh:'中立',c:'--l3'},{v:2,zh:'不同意',c:'--l2'},{v:1,zh:'非常不同意',c:'--l1'},{v:0,zh:'棄權',c:null}];
@@ -309,7 +311,15 @@ function lsSet(k, v){ try { localStorage.setItem(k, JSON.stringify(v)); } catch 
 function lsDel(k){ try { localStorage.removeItem(k); } catch {} }
 function corBadge(v){ const c = COR.find(x => x.v === v); return c ? h('span', {class:'badge cor-' + v, title:'推薦等級'}, 'COR ' + c.label) : null; }
 function loeBadge(v){ return v ? h('span', {class:'badge loe', title:'證據等級'}, 'LOE ' + v) : null; }
-function kdigoBadge(v){ return v ? h('span', {class:'badge loe', title:'KDIGO 分級對應'}, 'KDIGO ' + v) : null; }
+function kdigoExplain(v){
+  if (!v) return '';
+  if (v === 'PP') return 'Practice Point：專家意見，不分級';
+  const m = /^([12])([ABCD])(（反向）)?$/.exec(v); if (!m) return '';
+  const q = {A:'高', B:'中', C:'低', D:'極低'}[m[2]];
+  const st = m[3] ? (m[1] === '1' ? '強烈反對（We recommend not）' : '反對（We suggest not）') : (m[1] === '1' ? '強建議（We recommend）' : '弱建議（We suggest）');
+  return st + '・證據品質' + q;
+}
+function kdigoBadge(v){ return v ? h('span', {class:'kd'}, h('span', {class:'badge loe', title:kdigoExplain(v)}, 'KDIGO ' + v), h('span', {class:'kd-x'}, kdigoExplain(v))) : null; }
 function groupOf(id){ return GROUPS.find(g => g.id === id) || {id, zh:id, en:''}; }
 function fmtTime(iso){ if (!iso) return ''; const d = new Date(iso); return (d.getMonth()+1) + '/' + d.getDate() + ' ' + String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0'); }
 function fillSelect(sel, opts, blank){ sel.replaceChildren(); if (blank) sel.append(h('option', {value:''}, blank)); opts.forEach(o => sel.append(h('option', {value:o.v}, o.label))); }
