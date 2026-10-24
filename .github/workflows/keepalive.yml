@@ -1,0 +1,16 @@
+name: keep-supabase-awake
+# Supabase free projects pause after 7 days without activity; ping every 3 days.
+on:
+  schedule:
+    - cron: "17 3 */3 * *"
+  workflow_dispatch:
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping Supabase REST
+        run: |
+          curl -fsS -X POST "https://tqgfwcumuhxbcebofavf.supabase.co/rest/v1/rpc/is_allowed_email" \
+            -H "apikey: sb_publishable_BSTP8Ll5WtzyCbez6dPLxQ_P5ro5K7m" \
+            -H "Content-Type: application/json" \
+            -d '{"p_email":"keepalive@example.com"}'
