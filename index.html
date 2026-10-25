@@ -632,7 +632,7 @@ function buildCard(r){
   const refs = recRefs(r);
   if (refs.length) card.append(h('details', {class:'more'}, h('summary', null, '參考文獻（' + refs.length + '）'), h('ol', {class:'refs'}, refs.map(x => h('li', {value:String(x.n)}, linkify(x.citation || ''))))));
   const src = Array.isArray(r.src) ? r.src.filter(x => x && x !== 'new') : [];
-  card.append(h('p', {class:'topic'}, src.length ? '由共識草案 v2 條文：' + src.join('、') : '本版新增條文'));
+  card.append(h('p', {class:'topic'}, src.length ? '整合第七章初稿條文：' + src.join('、') + '（含實施要點）' : '本版新增條文'));
   const results = h('div', {class:'results'}); const comments = h('div', {class:'comments'});
   card.append(results);
   if (r.status === 'voting') card.append(buildVoteForm(r));
