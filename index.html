@@ -146,6 +146,16 @@ dl.facts{display:grid;grid-template-columns:max-content 1fr;gap:4px 12px;margin:
 dl.facts dt{color:var(--muted);font-weight:500}
 dl.facts dd{margin:0;min-width:0;overflow-wrap:anywhere}
 @media (max-width:560px){dl.facts{grid-template-columns:1fr}}
+.band{font-size:.84rem;display:grid;gap:10px;min-width:0}
+.band table{font-size:.8rem;min-width:900px}
+.band td:last-child{font-size:.72rem;color:var(--muted)}
+.band ul,.band ol{margin:0;padding-left:20px}
+.band h2{font-size:1rem;margin:6px 0 0}
+figure.flow{margin:0;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:12px;display:grid;gap:8px;min-width:0}
+figure.flow .svgwrap{background:#fff;border-radius:6px;padding:6px;overflow:auto;max-height:85vh}
+figure.flow svg{width:100%;height:auto;display:block}
+figure.flow figcaption{font-weight:700;font-size:.9rem}
+figure.flow a{font-size:.8rem}
 .md{display:grid;gap:8px;min-width:0}
 .md p{line-height:1.75;overflow-wrap:anywhere}
 .md h5{margin:6px 0 0;font-size:.92rem}
@@ -462,6 +472,7 @@ function renderList(){
   if (!S.recs.length){ list.append(h('div', {class:'empty'}, '目前還沒有條文。管理者載入後就會出現。')); return; }
   if (!recs.length){ list.append(h('div', {class:'empty'}, '沒有符合篩選條件的條文。')); return; }
   if (S.filter === 'all' && !S.q && S.intros.global) list.append(renderGlobalIntro(S.intros.global));
+  if (S.filter === 'all' && !S.q && S.intros.band) list.append(renderBand(S.intros.band));
   let cur = null;
   for (const r of recs){
     if (r.grp !== cur){
@@ -471,9 +482,29 @@ function renderList(){
       if (!S.q && (sec.refs || []).length) list.append(h('details', {class:'more secrefs'}, h('summary', null, '本節參考文獻（' + sec.refs.length + '）'), h('ol', {class:'refs'}, sec.refs.map(x => h('li', {value:String(x.n)}, linkify(x.citation || ''))))));
     }
     list.append(buildCard(r));
+    if (!S.q) (Array.isArray(S.intros.figs) ? S.intros.figs : []).filter(f => f.afterCode === r.code).forEach(f => list.append(renderFig(f)));
   }
 }
 /* ---------- intros ---------- */
+/* band / figs come from the admin-only intros table; strip scripts and inline handlers before inserting. */
+function safeHtml(html){
+  const doc = new DOMParser().parseFromString(String(html || ''), 'text/html');
+  doc.querySelectorAll('script,iframe,object,embed,foreignObject').forEach(x => x.remove());
+  doc.querySelectorAll('*').forEach(el => [...el.attributes].forEach(a => { if (/^on/i.test(a.name) || /^\s*javascript:/i.test(a.value)) el.removeAttribute(a.name); }));
+  return doc.body.innerHTML;
+}
+function renderBand(b){
+  const body = h('div', {class:'band'}); body.innerHTML = safeHtml(b.html);
+  body.querySelectorAll('table').forEach(t => { const w = h('div', {class:'tbl'}); t.replaceWith(w); w.append(t); });
+  const kids = [body];
+  if (b.pending){ const pb = h('div', {class:'band'}); pb.innerHTML = safeHtml(b.pending); kids.push(h('details', {class:'more'}, h('summary', null, '待釐清（會議用）'), pb)); }
+  return introPanel('band', b.title || '表 7-0', kids);
+}
+function renderFig(f){
+  const svg = safeHtml(f.svg); const w = h('div', {class:'svgwrap'}); w.innerHTML = svg;
+  const url = URL.createObjectURL(new Blob([svg], {type:'image/svg+xml'}));
+  return h('figure', {class:'flow', id:'fig-' + f.id}, h('figcaption', null, f.title), w, h('a', {href:url, target:'_blank', rel:'noopener'}, '另開放大'));
+}
 function codeLink(code){
   let r = S.recs.find(x => x.code === code);
   if (r) return h('a', {href:'#rec-' + r.id, class:'mono'}, code);
