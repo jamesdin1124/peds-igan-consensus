@@ -629,6 +629,8 @@ function buildCard(r){
     h('dt', null, '臨床預後（Clinical Outcomes）'), h('dd', null, r.outcomes || '—'),
     h('dt', null, '支持文獻'), h('dd', null, nums.length ? '(' + nums.join(',') + ')' : '—')));
   if (r.narrative) card.append(h('details', {class:'more'}, h('summary', null, '詳細內文'), h('div', {class:'more-body'}, renderMd(r.narrative))));
+  const disc = String(r.rationale || '').split('\n').map(x => x.trim()).filter(Boolean);
+  if (disc.length) card.append(h('details', {class:'more'}, h('summary', null, '待討論（會議用，' + disc.length + ' 項）'), h('div', {class:'more-body'}, h('ul', {class:'refs'}, disc.map(x => h('li', null, linkify(x)))))));
   const refs = recRefs(r);
   if (refs.length) card.append(h('details', {class:'more'}, h('summary', null, '參考文獻（' + refs.length + '）'), h('ol', {class:'refs'}, refs.map(x => h('li', {value:String(x.n)}, linkify(x.citation || ''))))));
   const src = Array.isArray(r.src) ? r.src.filter(x => x && x !== 'new') : [];
