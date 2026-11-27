@@ -197,6 +197,8 @@ details.extra .grid2{margin-bottom:10px}
 .msec-h{display:flex;gap:8px;justify-content:space-between;align-items:baseline;font-size:.9rem;line-height:1.45}
 .msec-h b{min-width:0;overflow-wrap:anywhere}
 @media (max-width:760px){.map{grid-template-columns:1fr;gap:28px}.lane+.lane::before{content:'↓';left:50%;top:-30px;line-height:1;transform:translateX(-50%)}}
+.disc>li{margin:6px 0;line-height:1.7}
+.disc ul{margin-top:2px;list-style:circle}
 [hidden]{display:none!important}
 </style>
 </head>
@@ -734,6 +736,16 @@ function recRefs(r){
   const nums = Array.isArray(r.ref_nums) ? r.ref_nums : [];
   return (sec.refs || []).filter(x => nums.includes(x.n));
 }
+/* A discussion line can be a leftover table row ("| a | b | c |"). Show it as a bold label with its points below, without the pipes. */
+function discItem(x){
+  if (!/^\|.*\|$/.test(x)) return h('li', null, linkify(x));
+  const cells = x.replace(/^\||\|$/g, '').split('|').map(c => c.trim()).filter(Boolean);
+  if (!cells.length || cells.every(c => /^:?-+:?$/.test(c))) return null;
+  const label = /^\d+$/.test(cells[0]) ? '第 ' + cells[0] + ' 項' : cells[0]; const rest = cells.slice(1);
+  if (!rest.length) return h('li', null, linkify(cells[0]));
+  if (rest.length === 1) return h('li', null, h('b', null, label), '：', linkify(rest[0]));
+  return h('li', null, h('b', null, label), h('ul', {class:'refs'}, rest.map(c => h('li', null, linkify(c)))));
+}
 function buildCard(r){
   const card = h('article', {class:'rec', id:'rec-' + r.id});
   const against = r.direction === 'against' || isAgainst(r.strength);
@@ -748,7 +760,8 @@ function buildCard(r){
     h('dt', null, '臨床預後（Clinical Outcomes）'), h('dd', null, r.outcomes || '—')));
   if (r.narrative) card.append(h('details', {class:'more'}, h('summary', null, '詳細內文'), h('div', {class:'more-body'}, renderMd(r.narrative))));
   const disc = String(r.rationale || '').split('\n').map(x => x.trim()).filter(Boolean);
-  if (disc.length) card.append(h('details', {class:'more'}, h('summary', null, '待討論（會議用，' + disc.length + ' 項）'), h('div', {class:'more-body'}, h('ul', {class:'refs'}, disc.map(x => h('li', null, linkify(x)))))));
+  const discItems = disc.map(discItem).filter(Boolean);
+  if (discItems.length) card.append(h('details', {class:'more'}, h('summary', null, '待討論（會議用，' + discItems.length + ' 項）'), h('div', {class:'more-body'}, h('ul', {class:'refs disc'}, discItems))));
   const refs = recRefs(r);
   if (refs.length) card.append(h('details', {class:'more'}, h('summary', null, '參考文獻（' + refs.length + '）'), h('ol', {class:'refs'}, refs.map(x => h('li', {value:String(x.n)}, linkify(x.citation || ''))))));
   const src = Array.isArray(r.src) ? r.src.filter(x => x && x !== 'new') : [];
