@@ -745,8 +745,7 @@ function buildCard(r){
   card.append(h('p', {class:'stmt'}, r.text));
   const nums = Array.isArray(r.ref_nums) ? r.ref_nums : [];
   card.append(h('dl', {class:'facts'},
-    h('dt', null, '臨床預後（Clinical Outcomes）'), h('dd', null, r.outcomes || '—'),
-    h('dt', null, '支持文獻'), h('dd', null, nums.length ? '(' + nums.join(',') + ')' : '—')));
+    h('dt', null, '臨床預後（Clinical Outcomes）'), h('dd', null, r.outcomes || '—')));
   if (r.narrative) card.append(h('details', {class:'more'}, h('summary', null, '詳細內文'), h('div', {class:'more-body'}, renderMd(r.narrative))));
   const disc = String(r.rationale || '').split('\n').map(x => x.trim()).filter(Boolean);
   if (disc.length) card.append(h('details', {class:'more'}, h('summary', null, '待討論（會議用，' + disc.length + ' 項）'), h('div', {class:'more-body'}, h('ul', {class:'refs'}, disc.map(x => h('li', null, linkify(x)))))));
