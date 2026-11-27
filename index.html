@@ -199,6 +199,10 @@ details.extra .grid2{margin-bottom:10px}
 @media (max-width:760px){.map{grid-template-columns:1fr;gap:28px}.lane+.lane::before{content:'↓';left:50%;top:-30px;line-height:1;transform:translateX(-50%)}}
 .disc>li{margin:6px 0;line-height:1.7}
 .disc ul{margin-top:2px;list-style:circle}
+.iss{border-top:1px dashed var(--line);padding-top:12px;margin-top:4px;display:grid;gap:8px;min-width:0}
+.iss .iq{font-size:.98rem;line-height:1.65}
+.iss .scale label{font-size:.92rem;padding:8px 14px;min-height:40px;border-radius:12px}
+details.issues>summary{font-size:.95rem;font-weight:700}
 [hidden]{display:none!important}
 </style>
 </head>
@@ -349,7 +353,7 @@ const optLabel = (opts, v) => { const o = opts.find(x => x.v === v); return o ? 
 const AGREE = [{v:5,zh:'非常同意',c:'--l5'},{v:4,zh:'同意',c:'--l4'},{v:3,zh:'中立',c:'--l3'},{v:2,zh:'不同意',c:'--l2'},{v:1,zh:'非常不同意',c:'--l1'},{v:0,zh:'棄權',c:null}];
 const STATUS = {voting:'投票中', draft:'草稿', consensus:'已定案', withdrawn:'撤回'};
 
-const S = {sections:[], email:null, me:null, admin:false, recs:[], mine:{}, summary:{}, proposals:[], members:[], cfg:{round:1, threshold:75, min_votes:3}, intros:{}, filter:'all', q:'', cards:new Map(), pendingEmail:null};
+const S = {sections:[], email:null, me:null, admin:false, recs:[], mine:{}, summary:{}, proposals:[], members:[], cfg:{round:1, threshold:75, min_votes:3}, intros:{}, issues:[], myIssue:{}, issueSum:{}, issueEls:[], filter:'all', q:'', cards:new Map(), pendingEmail:null};
 
 const $ = id => document.getElementById(id);
 function h(tag, attrs, ...kids){
@@ -430,15 +434,20 @@ async function signOut(){ await sb.auth.signOut(); location.reload(); }
 
 /* ---------- data ---------- */
 async function loadAll(){
-  const [cfg, recs, mine, props, mem, intr, secs] = await Promise.all([
+  const [cfg, recs, mine, props, mem, intr, secs, iss, ivotes] = await Promise.all([
     sb.from('config').select('*').eq('id', 1).maybeSingle(),
     sb.from('recs').select('*').order('grp').order('ord'),
     sb.from('ballots').select('*').eq('voter_email', S.email),
     sb.from('proposals').select('*').order('created_at'),
     sb.from('members').select('*').order('added_at'),
     sb.from('intros').select('id,content'),
-    sb.from('sections').select('*').order('num')
+    sb.from('sections').select('*').order('num'),
+    sb.from('issues').select('*').order('ord'),
+    sb.from('issue_votes').select('*').eq('voter_email', S.email)
   ]);
+  /* The issues tables are optional: when they are missing, the card falls back to the plain discussion list. */
+  S.issues = iss.error ? [] : (iss.data || []);
+  S.myIssue = {}; if (!ivotes.error) (ivotes.data || []).forEach(v => { S.myIssue[v.issue_id] = v; });
   for (const r of [cfg, recs, mine, props, mem]) if (r.error) throw r.error;
   S.intros = {}; if (!intr.error) (intr.data || []).forEach(x => { S.intros[x.id] = x.content; });
   if (cfg.data) S.cfg = cfg.data;
@@ -454,12 +463,13 @@ async function loadAll(){
 async function reloadCfgAndSummary(){
   const {data} = await sb.from('config').select('*').eq('id', 1).maybeSingle();
   if (data){ const roundChanged = data.round !== S.cfg.round; S.cfg = data; if (roundChanged){ await refresh(); return; } }
-  await loadSummary(); S.cards.forEach((_, id) => fillResults(id)); renderWho();
+  await loadSummary(); S.cards.forEach((_, id) => fillResults(id)); S.issueEls.forEach(f => f()); renderWho();
 }
 async function loadSummary(){
   const {data, error} = await sb.rpc('round_summary', {p_round:S.cfg.round});
   if (error) throw error;
   S.summary = data || {};
+  if (S.issues.length){ const r = await sb.rpc('issue_summary'); S.issueSum = r.error ? {} : (r.data || {}); }
 }
 function myBallot(recId){ return S.mine[S.cfg.round + ':' + recId] || null; }
 function tally(recId){
@@ -556,7 +566,7 @@ function matches(r){
 function renderList(){
   const list = $('list');
   if (S.filter === 'prop'){ renderProposals(); return; }
-  list.replaceChildren(); S.cards.clear();
+  list.replaceChildren(); S.cards.clear(); S.issueEls = [];
   const recs = visibleRecs().filter(matches).sort((a,b) => a.grp.localeCompare(b.grp) || a.ord - b.ord);
   if (!S.recs.length){ list.append(h('div', {class:'empty'}, '目前還沒有條文。管理者載入後就會出現。')); return; }
   if (!recs.length){ list.append(h('div', {class:'empty'}, S.q ? '沒有符合搜尋的條文。' : S.filter === 'todo' ? '你已經全部投完。謝謝！' : S.filter === 'done' ? '你還沒有投任何一條。' : '沒有條文。')); return; }
@@ -748,6 +758,56 @@ function discItem(x){
   if (rest.length === 1) return h('li', null, h('b', null, label), '：', linkify(rest[0]));
   return h('li', null, h('b', null, label), h('ul', {class:'refs'}, rest.map(c => h('li', null, linkify(c)))));
 }
+/* ---------- meeting issues: one tap on an option saves the member's preference ---------- */
+const NO_OPINION = '沒有意見';
+function issueAnswered(id){ const v = S.myIssue[id]; return !!(v && (v.choice || (v.comment || '').trim())); }
+function buildIssues(r, list){
+  const sum = h('summary', null, '');
+  const fill = () => { const n = list.filter(i => issueAnswered(i.id)).length; sum.textContent = '會議議題：請點選你的傾向（已答 ' + n + ' / ' + list.length + '）'; };
+  fill(); S.issueEls.push(fill);
+  return h('details', {class:'more issues'}, sum, h('div', {class:'more-body'},
+    h('p', {class:'muted'}, '這些是會議要討論的問題。點一個選項就儲存，之後可以再改。這不是正式表決；結果用來安排會議議程。'),
+    list.map(i => issueBlock(r, i))));
+}
+function issueBlock(r, i){
+  const opts = Array.isArray(i.options) ? i.options : []; const name = 'iss-' + r.id + '-' + i.id;
+  const scale = h('div', {class:'scale', role:'radiogroup', 'aria-label':i.topic});
+  opts.concat(opts.length ? [NO_OPINION] : []).forEach(o => scale.append(h('label', null, h('input', {type:'radio', name, value:o}), o)));
+  const note = h('input', {type:'text', placeholder: opts.length ? '想法（可不填）' : '請寫下你的想法', 'aria-label':'想法'});
+  const msg = h('span', {class:'saved'}); const tally = h('div', {class:'results', hidden:true});
+  const shared = (i.rec_codes || []).length > 1 ? h('span', {class:'muted', style:'font-size:.8rem'}, '同一題也出現在 ' + i.rec_codes.filter(c => c !== r.code).join('、') + '；回答一次即可') : null;
+  const sync = () => {
+    const v = S.myIssue[i.id] || {};
+    scale.querySelectorAll('input').forEach(x => { x.checked = x.value === v.choice; });
+    if (document.activeElement !== note) note.value = v.comment || '';
+    msg.textContent = issueAnswered(i.id) ? '✓ 已儲存' : '';
+    const t = S.issueSum[i.id]; const show = !resultsHidden() && t && (Object.keys(t.counts || {}).length || (t.comments || []).length);
+    tally.hidden = !show; tally.replaceChildren();
+    if (show){
+      const c = Object.entries(t.counts || {}).sort((a,b) => b[1] - a[1]);
+      if (c.length) tally.append(h('div', {class:'dist'}, c.map(([k,n]) => h('span', null, k + ' ', h('b', {class:'mono'}, '×' + n)))));
+      (t.comments || []).forEach(x => tally.append(h('div', {class:'cmt'}, h('div', null, h('b', null, x.name || '委員'), x.choice ? '（' + x.choice + '）' : ''), h('p', null, x.comment))));
+    }
+  };
+  const save = async () => {
+    const sel = scale.querySelector('input:checked'); const choice = sel ? sel.value : null; const comment = note.value.trim();
+    if (!choice && !comment && !S.myIssue[i.id]) return;
+    msg.textContent = '儲存中…';
+    const row = {issue_id:i.id, voter_email:S.email, choice, comment, updated_at:new Date().toISOString()};
+    const {data, error} = await sb.from('issue_votes').upsert(row, {onConflict:'issue_id,voter_email'}).select().single();
+    if (error){ msg.textContent = '無法儲存：' + errText(error); return; }
+    S.myIssue[i.id] = data;
+    try { const s2 = await sb.rpc('issue_summary'); if (!s2.error) S.issueSum = s2.data || {}; } catch {}
+    S.issueEls.forEach(f => f());
+  };
+  scale.addEventListener('change', save); note.addEventListener('change', save);
+  note.addEventListener('keydown', e => { if (e.key === 'Enter'){ e.preventDefault(); note.blur(); } });
+  sync(); S.issueEls.push(sync);
+  return h('div', {class:'iss'},
+    h('div', {class:'row'}, h('span', {class:'chip'}, i.tag || '議題'), h('b', null, i.topic), msg),
+    h('p', {class:'iq'}, i.question), i.note ? h('p', {class:'muted', style:'font-size:.84rem'}, i.note) : null,
+    opts.length ? scale : null, note, shared, tally);
+}
 function buildCard(r){
   const card = h('article', {class:'rec', id:'rec-' + r.id});
   const against = r.direction === 'against' || isAgainst(r.strength);
@@ -763,7 +823,9 @@ function buildCard(r){
   if (r.narrative) card.append(h('details', {class:'more'}, h('summary', null, '詳細內文'), h('div', {class:'more-body'}, renderMd(r.narrative))));
   const disc = String(r.rationale || '').split('\n').map(x => x.trim()).filter(Boolean);
   const discItems = disc.map(discItem).filter(Boolean);
-  if (discItems.length) card.append(h('details', {class:'more'}, h('summary', null, '待討論（會議用，' + discItems.length + ' 項）'), h('div', {class:'more-body'}, h('ul', {class:'refs disc'}, discItems))));
+  const myIss = S.issues.filter(i => (i.rec_codes || []).includes(r.code));
+  if (myIss.length) card.append(buildIssues(r, myIss));
+  else if (discItems.length) card.append(h('details', {class:'more'}, h('summary', null, '待討論（會議用，' + discItems.length + ' 項）'), h('div', {class:'more-body'}, h('ul', {class:'refs disc'}, discItems))));
   const refs = recRefs(r);
   if (refs.length) card.append(h('details', {class:'more'}, h('summary', null, '參考文獻（' + refs.length + '）'), h('ol', {class:'refs'}, refs.map(x => h('li', {value:String(x.n)}, linkify(x.citation || ''))))));
   const results = h('div', {class:'results'}); const comments = h('div', {class:'comments'});
