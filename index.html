@@ -163,6 +163,40 @@ figure.flow a{font-size:.8rem}
 .md li{margin:3px 0;overflow-wrap:anywhere}
 .md li.sub{margin-left:18px;list-style:circle}
 .secrefs{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:8px 14px}
+.pbar{height:8px;border-radius:999px;background:var(--line);overflow:hidden}
+.pbar span{display:block;height:100%;background:var(--ok)}
+.pgroup{display:grid;gap:6px}
+.pgroup h3{font-size:.85rem}
+.pchips{display:flex;flex-wrap:wrap;gap:6px}
+.pchip{font:inherit;font-size:.8rem;padding:3px 10px;border-radius:999px;border:1px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer;display:inline-flex;gap:6px;align-items:center;max-width:100%;min-width:0}
+.pchip .t{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:12em}
+.pchip.todo{border-color:var(--warn)}
+.pchip.done{border-color:var(--ok);color:var(--ok)}
+article.rec{scroll-margin-top:120px}
+article.rec.flash{outline:2px solid var(--accent);outline-offset:2px}
+details.intro.fig{padding:10px 14px}
+details.intro.fig figure.flow{margin-top:8px;border:0;padding:0;background:transparent}
+.tab{font-size:.95rem;padding:8px 16px}
+button.btn{font-size:.95rem;padding:8px 16px}
+.pchip{font-size:.9rem;padding:6px 12px}
+.scale{gap:8px}
+.scale label{font-size:1rem;padding:10px 16px;min-height:44px}
+.scale label:has(input:checked){font-weight:700;border-width:2px}
+.vote .saved{font-size:.92rem}
+details.extra{border:1px solid var(--line);border-radius:6px;padding:8px 12px}
+details.extra summary{font-size:.92rem}
+details.extra[open] summary{margin-bottom:10px}
+details.extra .grid2{margin-bottom:10px}
+.map{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:32px;align-items:stretch}
+.lane{position:relative;background:var(--surface-2);border:1px solid var(--line);border-top:4px solid var(--accent);border-radius:var(--r);padding:12px;display:flex;flex-direction:column;gap:8px;min-width:0}
+.lane h3{font-size:1rem}
+.lane>p{font-size:.84rem}
+.lane+.lane::before{content:'→';position:absolute;left:-26px;top:50%;transform:translateY(-50%);font-size:1.2rem;color:var(--muted)}
+.msec{background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:8px 10px;display:grid;gap:6px;min-width:0}
+.msec.full{border-color:var(--ok)}
+.msec-h{display:flex;gap:8px;justify-content:space-between;align-items:baseline;font-size:.9rem;line-height:1.45}
+.msec-h b{min-width:0;overflow-wrap:anywhere}
+@media (max-width:760px){.map{grid-template-columns:1fr;gap:28px}.lane+.lane::before{content:'↓';left:50%;top:-30px;line-height:1;transform:translateX(-50%)}}
 [hidden]{display:none!important}
 </style>
 </head>
@@ -171,7 +205,7 @@ figure.flow a{font-size:.8rem}
   <header class="top">
     <span class="eyebrow">台灣腎臟醫學會 · 學術委員會 · 兒童 IgAN 工作小組</span>
     <h1>台灣兒童 IgA 腎病變診治臨床共識 — 委員投票</h1>
-    <p class="muted">第七章 兒童 IgA 腎病變（格式同成人合併指引 V4）。每一條請給同意程度，並提出你認為合適的建議強度與證據等級。可以寫評論與修改文字，也可以提出新條文。</p>
+    <p class="muted">第七章 兒童 IgA 腎病變（格式同成人合併指引 V4）。每一條請點選同意程度，點一下就完成投票。評論與修改建議可以不填。</p>
     <div class="who" id="who"></div>
   </header>
 
@@ -196,6 +230,9 @@ figure.flow a{font-size:.8rem}
 
   <!-- App -->
   <div id="appSec" hidden>
+    <section class="block">
+      <div class="panel" id="progress" hidden></div>
+    </section>
     <section class="block">
       <details class="legend">
         <summary>建議強度與證據等級之定義（與成人合併指引 V4 相同）</summary>
@@ -234,7 +271,6 @@ figure.flow a{font-size:.8rem}
       <div class="tabs" id="tabs" role="toolbar" aria-label="依節篩選"></div>
       <div class="row">
         <input type="text" id="q" class="grow" placeholder="搜尋條文、標題、編號或文獻" aria-label="搜尋條文">
-        <button class="btn ghost" id="refresh" type="button">重新整理</button>
       </div>
     </div>
 
@@ -439,8 +475,6 @@ function renderWho(){
   if (!S.email){ w.append(h('span', {class:'chip'}, '尚未登入')); return; }
   w.append(h('span', {class:'chip acc'}, '第 ' + S.cfg.round + ' 輪'));
   const active = S.recs.filter(r => r.status === 'voting');
-  const done = active.filter(r => myBallot(r.id)).length;
-  w.append(h('span', {class:'chip ' + (done === active.length && active.length ? 'ok' : '')}, '我已投 ' + done + ' / ' + active.length + ' 條'));
   if (resultsHidden()) w.append(h('span', {class:'chip'}, '第 ' + S.cfg.round + ' 輪盲投中'));
   else w.append(h('span', {class:'chip ok'}, '達共識 ' + active.filter(r => tally(r.id).state === 'yes').length + ' 條'));
   if (S.admin && !S.cfg.results_public) w.append(h('span', {class:'chip warn'}, '結果未公布'));
@@ -448,18 +482,71 @@ function renderWho(){
   if (S.admin) w.append(h('span', {class:'chip'}, '管理者'));
   w.append(h('button', {class:'btn ghost', type:'button', style:'padding:1px 10px;font-size:.78rem', onclick:signOut}, '登出'));
   $('ruleLine').textContent = '同意比例 ≥ ' + S.cfg.threshold + '%，且有效票 ≥ ' + S.cfg.min_votes + ' 票，該條達成共識。';
+  renderProgress();
+}
+/* ---------- my progress ---------- */
+function agreeZh(v){ const a = AGREE.find(x => x.v === v); return a ? a.zh : ''; }
+function hasNote(b){ return !!(b && ((b.comment || '').trim() || (b.wording || '').trim())); }
+/* Topic map: the 9 sections in 3 lanes that follow the clinical pathway. Each statement is a pill that shows my vote state. */
+const LANES = [
+  {title:'① 診斷與評估', q:'誰要檢查與切片？怎麼分層與追蹤？', nums:[1, 2]},
+  {title:'② 基礎治療', q:'每一位病人都要做什麼？', nums:[3, 4, 5]},
+  {title:'③ 免疫抑制與其他治療', q:'蛋白尿持續或重症時，加什麼？不做什麼？', nums:[6, 7, 8, 9]}
+];
+function renderProgress(){
+  const p = $('progress'); if (!p) return;
+  const all = visibleRecs().slice().sort((a,b) => a.grp.localeCompare(b.grp) || a.ord - b.ord);
+  const active = all.filter(r => r.status === 'voting');
+  if (!S.me || !all.length){ p.hidden = true; return; }
+  p.hidden = false; p.replaceChildren();
+  const todo = active.filter(r => !myBallot(r.id)), done = active.filter(r => myBallot(r.id));
+  const pill = r => { const b = myBallot(r.id); const st = r.status !== 'voting' ? '' : b ? 'done' : 'todo';
+    return h('button', {type:'button', class:'pchip ' + st, title:(r.title || r.code) + (st === 'done' ? '：已投' : st === 'todo' ? '：還沒投' : ''), onclick:() => jumpTo(r.id)},
+      h('span', {class:'mono'}, r.code), st === 'done' ? h('span', null, '✓') : null); };
+  const secNums = [...new Set(all.map(r => Number(String(r.grp).replace(/\D/g, ''))))];
+  const known = LANES.flatMap(l => l.nums);
+  const lanes = LANES.map(l => Object.assign({}, l)); const extra = secNums.filter(n => !known.includes(n));
+  if (extra.length) lanes.push({title:'其他', q:'', nums:extra});
+  const secBox = n => {
+    const recs = all.filter(r => Number(String(r.grp).replace(/\D/g, '')) === n); if (!recs.length) return null;
+    const sec = S.sections.find(x => x.num === n) || {}; const act = recs.filter(r => r.status === 'voting'); const d = act.filter(r => myBallot(r.id)).length;
+    return h('div', {class:'msec' + (act.length && d === act.length ? ' full' : '')},
+      h('div', {class:'msec-h'}, h('b', null, '7-' + n + '　' + (sec.title || '')), act.length ? h('span', {class:'mono muted'}, d + '/' + act.length) : null),
+      h('div', {class:'pchips'}, recs.map(pill)));
+  };
+  p.append(h('div', {class:'row'}, h('h2', null, '議題地圖與我的投票進度'),
+    active.length ? h('span', {class:'chip ' + (todo.length ? 'warn' : 'ok')}, '已投 ' + done.length + ' / ' + active.length + ' 條') : null,
+    todo.length ? h('button', {class:'btn', type:'button', onclick:() => jumpTo(todo[0].id)}, (done.length ? '繼續投票' : '開始投票') + ' →') : active.length ? h('span', {class:'chip ok'}, '全部投完') : null));
+  if (active.length) p.append(h('div', {class:'pbar', role:'img', 'aria-label':'已投 ' + done.length + ' / ' + active.length}, h('span', {style:'width:' + (done.length / active.length * 100) + '%'})));
+  p.append(h('p', {class:'muted', style:'font-size:.9rem'}, '本共識依病人的臨床路徑分 ' + lanes.length + ' 個面向，共 ' + secNums.length + ' 節 ' + all.length + ' 條。點條文編號就前往該條投票。'));
+  p.append(h('div', {class:'map'}, lanes.map(l => { const boxes = l.nums.map(secBox).filter(Boolean); return boxes.length ? h('div', {class:'lane'}, h('h3', null, l.title), l.q ? h('p', {class:'muted'}, l.q) : null, boxes) : null; })));
+  p.append(h('div', {class:'row muted', style:'font-size:.82rem'}, h('span', {class:'pchip done', style:'cursor:default'}, h('span', {class:'mono'}, '7-x-x'), '✓'), '已投', h('span', {class:'pchip todo', style:'cursor:default'}, h('span', {class:'mono'}, '7-x-x')), '還沒投'));
+  S.cards.forEach((_, id) => fillMine(id));
+}
+function fillMine(recId){
+  const c = S.cards.get(recId); if (!c || !c.mine) return; const b = myBallot(recId);
+  c.mine.className = 'chip ' + (b ? 'ok' : 'warn');
+  c.mine.textContent = b ? '我已投：' + agreeZh(b.agree) + (hasNote(b) ? ' · 有評論' : '') : '我還沒投';
+}
+function jumpTo(recId){
+  if (!S.cards.has(recId)){ S.filter = 'all'; S.q = ''; $('q').value = ''; lsSet('igan.filter', 'all'); renderTabs(); renderList(); }
+  const el = $('rec-' + recId); if (!el) return;
+  el.scrollIntoView({block:'start'});
+  el.classList.add('flash'); setTimeout(() => el.classList.remove('flash'), 1600);
 }
 function visibleRecs(){ return S.recs.filter(r => r.status !== 'withdrawn' || S.admin); }
 function renderTabs(){
   const tabs = $('tabs'); tabs.replaceChildren(); const recs = visibleRecs();
   const mk = (id, label, n) => h('button', {type:'button', class:'tab', 'aria-pressed':String(S.filter === id), onclick:() => { S.filter = id; lsSet('igan.filter', id); renderTabs(); renderList(); }}, label, h('span', {class:'n'}, n));
-  tabs.append(mk('all', '全部', recs.length));
-  S.sections.forEach(sec => { const id = 'S' + String(sec.num).padStart(2, '0'); const n = recs.filter(r => r.grp === id).length; if (n) tabs.append(mk(id, '7-' + sec.num + ' ' + secShort(sec.title), n)); });
-  tabs.append(mk('todo', '我還沒投', recs.filter(r => r.status === 'voting' && !myBallot(r.id)).length));
+  if (!['all', 'todo', 'done', 'prop'].includes(S.filter)) S.filter = 'all';
+  tabs.append(mk('all', '全部條文', recs.length));
+  tabs.append(mk('todo', '還沒投', recs.filter(r => r.status === 'voting' && !myBallot(r.id)).length));
+  tabs.append(mk('done', '已投', recs.filter(r => r.status === 'voting' && myBallot(r.id)).length));
   tabs.append(mk('prop', '委員提案', S.proposals.length));
 }
 function matches(r){
   if (S.filter === 'todo' && !(r.status === 'voting' && !myBallot(r.id))) return false;
+  if (S.filter === 'done' && !(r.status === 'voting' && myBallot(r.id))) return false;
   if (/^S\d+$/.test(S.filter) && r.grp !== S.filter) return false;
   if (!S.q) return true;
   return [r.code, r.title, r.text, r.outcomes, r.narrative, r.rationale, JSON.stringify(r.src)].join(' ').toLowerCase().includes(S.q);
@@ -470,7 +557,7 @@ function renderList(){
   list.replaceChildren(); S.cards.clear();
   const recs = visibleRecs().filter(matches).sort((a,b) => a.grp.localeCompare(b.grp) || a.ord - b.ord);
   if (!S.recs.length){ list.append(h('div', {class:'empty'}, '目前還沒有條文。管理者載入後就會出現。')); return; }
-  if (!recs.length){ list.append(h('div', {class:'empty'}, '沒有符合篩選條件的條文。')); return; }
+  if (!recs.length){ list.append(h('div', {class:'empty'}, S.q ? '沒有符合搜尋的條文。' : S.filter === 'todo' ? '你已經全部投完。謝謝！' : S.filter === 'done' ? '你還沒有投任何一條。' : '沒有條文。')); return; }
   if (S.filter === 'all' && !S.q && S.intros.global) list.append(renderGlobalIntro(S.intros.global));
   if (S.filter === 'all' && !S.q && S.intros.band) list.append(renderBand(S.intros.band));
   let cur = null;
@@ -503,7 +590,8 @@ function renderBand(b){
 function renderFig(f){
   const svg = safeHtml(f.svg); const w = h('div', {class:'svgwrap'}); w.innerHTML = svg;
   const url = URL.createObjectURL(new Blob([svg], {type:'image/svg+xml'}));
-  return h('figure', {class:'flow', id:'fig-' + f.id}, h('figcaption', null, f.title), w, h('a', {href:url, target:'_blank', rel:'noopener'}, '另開放大'));
+  return h('details', {class:'intro fig', id:'fig-' + f.id}, h('summary', null, '參考資料｜' + f.title),
+    h('figure', {class:'flow'}, w, h('a', {href:url, target:'_blank', rel:'noopener'}, '另開放大')));
 }
 function codeLink(code){
   let r = S.recs.find(x => x.code === code);
@@ -513,10 +601,8 @@ function codeLink(code){
 }
 function codeLinks(codes){ const arr = (codes || []).filter(Boolean); if (!arr.length) return null; const out = [' （條文 ']; arr.forEach((c, i) => { if (i) out.push('、'); out.push(codeLink(c)); }); out.push('）'); return out; }
 function introPanel(key, title, body){
-  const k = 'igan.intro.' + key; const saved = lsGet(k);
-  const d = h('details', {class:'intro', open: saved === false ? null : true}, h('summary', null, title), h('div', {class:'intro-body'}, body));
-  d.addEventListener('toggle', () => lsSet(k, d.open));
-  return d;
+  /* Reference material: always collapsed on load. The member opens it when needed. */
+  return h('details', {class:'intro', 'data-key':key}, h('summary', null, '參考資料｜' + title), h('div', {class:'intro-body'}, body));
 }
 function tableOf(head, rows){
   return h('div', {class:'tbl'}, h('table', null, h('thead', null, h('tr', null, head.map(x => h('th', null, x)))), h('tbody', null, rows.map(r => h('tr', null, r.map(c => h('td', null, c)))))));
@@ -653,6 +739,8 @@ function buildCard(r){
   const against = r.direction === 'against' || isAgainst(r.strength);
   card.append(h('div', {class:'rec-head'}, h('span', {class:'code'}, r.code), r.title ? h('span', {class:'rtitle'}, r.title) : null,
     r.status !== 'voting' ? h('span', {class:'chip ' + (r.status === 'consensus' ? 'ok' : '')}, STATUS[r.status] || r.status) : null));
+  const mine = r.status === 'voting' ? h('span', {class:'chip'}) : null;
+  if (mine) card.firstChild.append(mine);
   card.append(h('div', {class:'rec-grade'}, dirBadge(against ? 'against' : 'for'), corBadge(r.strength), loeBadge(r.evidence), /^[12]/.test(r.strength || '') ? h('span', {class:'chip'}, gradeOf(r)) : null));
   card.append(h('p', {class:'stmt'}, r.text));
   const nums = Array.isArray(r.ref_nums) ? r.ref_nums : [];
@@ -670,8 +758,8 @@ function buildCard(r){
   card.append(results);
   if (r.status === 'voting') card.append(buildVoteForm(r));
   card.append(comments);
-  S.cards.set(r.id, {results, comments});
-  fillResults(r.id);
+  S.cards.set(r.id, {results, comments, mine});
+  fillResults(r.id); fillMine(r.id);
   return card;
 }
 function resultsHidden(){ return !S.cfg.results_public && !S.admin; }
@@ -700,9 +788,16 @@ function fillResults(recId){
       x.comment ? h('p', null, x.comment) : null, x.wording ? h('p', null, h('span', {class:'muted'}, '建議修改：'), x.wording) : null)));
   }
 }
+function nextTodo(afterId){
+  const act = visibleRecs().filter(r => r.status === 'voting').sort((a,b) => a.grp.localeCompare(b.grp) || a.ord - b.ord);
+  const i = act.findIndex(r => r.id === afterId);
+  return act.slice(i + 1).concat(act.slice(0, Math.max(i, 0))).find(r => !myBallot(r.id)) || null;
+}
+/* One tap on an agreement level saves the vote. Comments and grading are optional and collapsed. */
 function buildVoteForm(r){
   const saved = myBallot(r.id); const dk = 'igan.draft.' + S.cfg.round + '.' + r.id; const draft = lsGet(dk);
   const v = Object.assign({agree:null, cor:'', loe:'', comment:'', wording:''}, saved || {}, draft || {});
+  if (saved) v.agree = saved.agree;
   const pre = 'v-' + r.id + '-'; const form = h('form', {class:'vote'});
   const scale = h('div', {class:'scale', role:'radiogroup', 'aria-label':'同意程度'});
   AGREE.forEach(a => scale.append(h('label', null, h('input', {type:'radio', name:pre + 'a', value:String(a.v), checked:v.agree === a.v}), a.zh)));
@@ -710,9 +805,27 @@ function buildVoteForm(r){
   const loe = h('select', {id:pre + 'loe'}); fillSelect(loe, LOE_OPTS, r.loe ? '同意原提案（' + optLabel(LOE_OPTS, r.loe) + '）' : '同意原提案'); loe.value = v.loe || '';
   const c = h('textarea', {id:pre + 'c', placeholder:'評論：理由、台灣臨床經驗、文獻補充（會顯示你的姓名）'}); c.value = v.comment || '';
   const w = h('textarea', {id:pre + 'w', placeholder:'建議修改的條文文字（可空白）'}); w.value = v.wording || '';
-  const msg = h('span', {class:'saved'}, saved ? '已儲存 ' + fmtTime(saved.updated_at) : '尚未投票');
-  const btn = h('button', {class:'btn', type:'submit'}, saved ? '更新我的投票' : '送出投票');
+  const msg = h('span', {class:'saved'}, saved ? '✓ 已儲存：' + agreeZh(saved.agree) + '（' + fmtTime(saved.updated_at) + '）' : '點一個選項就完成投票。之後可以再改。');
+  const next = h('button', {class:'btn', type:'button', hidden:true}, '下一條還沒投的 →');
+  next.addEventListener('click', () => { const n = nextTodo(r.id); if (n) jumpTo(n.id); else { next.hidden = true; toast('你已經全部投完'); } });
+  const btn = h('button', {class:'btn', type:'submit'}, '儲存評論');
   const undo = h('button', {class:'btn ghost', type:'button', hidden: !saved}, '收回我的投票');
+  const radios = () => form.querySelectorAll('input[type=radio]');
+  const read = () => { const sel = form.querySelector('input[name="' + pre + 'a"]:checked'); return {agree: sel ? Number(sel.value) : null, cor:cor.value, loe:loe.value, comment:c.value.trim(), wording:w.value.trim()}; };
+  const busy = on => { radios().forEach(x => { x.disabled = on; }); btn.disabled = on; };
+  const save = async () => {
+    const b = read();
+    if (b.agree == null){ msg.textContent = '請先在上面點選同意程度。'; return; }
+    busy(true); msg.textContent = '儲存中…';
+    const row = {round:S.cfg.round, rec_id:r.id, voter_email:S.email, agree:b.agree, cor:b.cor || null, loe:b.loe || null, comment:b.comment, wording:b.wording, updated_at:new Date().toISOString()};
+    const {data, error} = await sb.from('ballots').upsert(row, {onConflict:'round,rec_id,voter_email'}).select().single();
+    busy(false);
+    if (error){ msg.textContent = '無法儲存：' + errText(error); return; }
+    S.mine[S.cfg.round + ':' + r.id] = data; lsDel(dk);
+    msg.textContent = '✓ 已儲存：' + agreeZh(data.agree) + '（' + fmtTime(data.updated_at) + '）'; undo.hidden = false; next.hidden = !nextTodo(r.id);
+    toast('已儲存 ' + r.code + ' 的投票');
+    try { renderWho(); renderTabs(); await loadSummary(); fillResults(r.id); } catch {}
+  };
   undo.addEventListener('click', async () => {
     if (undo.dataset.confirm !== '1'){ undo.dataset.confirm = '1'; undo.textContent = '再按一次確認收回'; msg.textContent = '收回後，這一條的同意度、建議與評論都會刪除。'; return; }
     undo.dataset.confirm = ''; undo.disabled = true; msg.textContent = '收回中…';
@@ -720,32 +833,23 @@ function buildVoteForm(r){
     undo.disabled = false;
     if (error){ msg.textContent = '無法收回：' + errText(error); undo.textContent = '收回我的投票'; return; }
     delete S.mine[S.cfg.round + ':' + r.id]; lsDel(dk);
-    form.querySelectorAll('input[type=radio]').forEach(x => { x.checked = false; });
+    radios().forEach(x => { x.checked = false; });
     cor.value = ''; loe.value = ''; c.value = ''; w.value = '';
-    undo.hidden = true; undo.textContent = '收回我的投票'; btn.textContent = '送出投票'; msg.textContent = '已收回，這一條目前沒有你的投票。';
+    undo.hidden = true; next.hidden = true; undo.textContent = '收回我的投票'; msg.textContent = '已收回，這一條目前沒有你的投票。';
     toast('已收回 ' + r.code + ' 的投票');
-    try { await loadSummary(); fillResults(r.id); renderWho(); renderTabs(); } catch {}
+    try { renderWho(); renderTabs(); await loadSummary(); fillResults(r.id); } catch {}
   });
+  const hasExtra = !!(v.cor || v.loe || v.comment || v.wording);
+  const extra = h('details', {class:'more extra', open: hasExtra ? true : null}, h('summary', null, '寫評論或修改建議（可不填）'),
+    h('div', {class:'grid2'}, h('label', {class:'lab'}, '評論', c), h('label', {class:'lab'}, '修改文字', w)),
+    h('div', {class:'grid2'}, h('label', {class:'lab'}, '我建議的建議強度', cor), h('label', {class:'lab'}, '我建議的證據等級', loe)),
+    h('div', {class:'row'}, btn, undo));
   form.append(h('h3', null, '我的投票'),
     (r.direction === 'against' || isAgainst(r.cor)) ? h('p', {class:'vote-hint'}, '本條是「不建議」的建議。同意本條＝同意「' + r.text.replace(/。$/, '') + '」。') : '',
-    scale,
-    h('div', {class:'grid2'}, h('label', {class:'lab'}, '我建議的建議強度', cor), h('label', {class:'lab'}, '我建議的證據等級', loe)),
-    h('div', {class:'grid2'}, h('label', {class:'lab'}, '評論', c), h('label', {class:'lab'}, '修改文字', w)),
-    h('div', {class:'row'}, btn, undo, msg));
-  const read = () => { const sel = form.querySelector('input[name="' + pre + 'a"]:checked'); return {agree: sel ? Number(sel.value) : null, cor:cor.value, loe:loe.value, comment:c.value.trim(), wording:w.value.trim()}; };
-  form.addEventListener('input', () => { lsSet(dk, read()); msg.textContent = '有未送出的修改'; });
-  form.addEventListener('submit', async e => {
-    e.preventDefault(); const b = read();
-    if (b.agree == null){ msg.textContent = '請先選同意程度。'; return; }
-    btn.disabled = true; msg.textContent = '儲存中…';
-    const row = {round:S.cfg.round, rec_id:r.id, voter_email:S.email, agree:b.agree, cor:b.cor || null, loe:b.loe || null, comment:b.comment, wording:b.wording, updated_at:new Date().toISOString()};
-    const {data, error} = await sb.from('ballots').upsert(row, {onConflict:'round,rec_id,voter_email'}).select().single();
-    btn.disabled = false;
-    if (error){ msg.textContent = '無法儲存：' + errText(error); return; }
-    S.mine[S.cfg.round + ':' + r.id] = data; lsDel(dk);
-    msg.textContent = '已儲存 ' + fmtTime(data.updated_at); btn.textContent = '更新我的投票'; undo.hidden = false; toast('已儲存 ' + r.code + ' 的投票');
-    try { await loadSummary(); fillResults(r.id); renderWho(); } catch {}
-  });
+    scale, h('div', {class:'row'}, msg, next), extra);
+  scale.addEventListener('change', save);
+  form.addEventListener('input', e => { if (e.target.type === 'radio') return; lsSet(dk, read()); msg.textContent = '評論還沒儲存。請按「儲存評論」。'; });
+  form.addEventListener('submit', e => { e.preventDefault(); save(); });
   return form;
 }
 
@@ -861,12 +965,16 @@ function init(){
   $('codeForm').addEventListener('submit', verifyCode);
   $('backEmail').addEventListener('click', () => { lsDel('igan.pendingEmail'); S.pendingEmail = null; $('codeForm').hidden = true; $('emailForm').hidden = false; });
   $('q').addEventListener('input', e => { S.q = e.target.value.trim().toLowerCase(); renderList(); });
-  $('refresh').addEventListener('click', async () => { try { await reloadCfgAndSummary(); toast('已更新'); } catch (err) { toast('更新失敗'); } });
   $('proposeForm').addEventListener('submit', submitProposal);
   $('memberForm').addEventListener('submit', addMember);
   $('cSave').addEventListener('click', saveCfg);
   $('exportCsv').addEventListener('click', exportCsv);
-  const f = lsGet('igan.filter'); if (f) S.filter = f;
+  document.addEventListener('click', e => {
+    const a = e.target.closest && e.target.closest('a[href^="#"]'); if (!a) return;
+    const t = document.getElementById(decodeURIComponent(a.getAttribute('href').slice(1))); if (!t) return;
+    for (let d = t.closest('details'); d; d = d.parentElement && d.parentElement.closest('details')) d.open = true;
+  });
+  const f = lsGet('igan.filter'); if (['all', 'todo', 'done', 'prop'].includes(f)) S.filter = f;
   let last = null;
   sb.auth.onAuthStateChange((event, session) => {
     const key = session ? session.user.id : 'none';
