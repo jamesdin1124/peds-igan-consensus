@@ -738,6 +738,8 @@ function recRefs(r){
 }
 /* A discussion line can be a leftover table row ("| a | b | c |"). Show it as a bold label with its points below, without the pipes. */
 function discItem(x){
+  /* Editorial headings that carry no question: skip. */
+  if (/^(待表決（會議用，正式版移除）|表決子題與編修說明（不屬正文）|附註\s*第 1 輪表決議題（非指引內文）)$/.test(x)) return null;
   if (!/^\|.*\|$/.test(x)) return h('li', null, linkify(x));
   const cells = x.replace(/^\||\|$/g, '').split('|').map(c => c.trim()).filter(Boolean);
   if (!cells.length || cells.every(c => /^:?-+:?$/.test(c))) return null;
@@ -764,8 +766,6 @@ function buildCard(r){
   if (discItems.length) card.append(h('details', {class:'more'}, h('summary', null, '待討論（會議用，' + discItems.length + ' 項）'), h('div', {class:'more-body'}, h('ul', {class:'refs disc'}, discItems))));
   const refs = recRefs(r);
   if (refs.length) card.append(h('details', {class:'more'}, h('summary', null, '參考文獻（' + refs.length + '）'), h('ol', {class:'refs'}, refs.map(x => h('li', {value:String(x.n)}, linkify(x.citation || ''))))));
-  const src = Array.isArray(r.src) ? r.src.filter(x => x && x !== 'new') : [];
-  card.append(h('p', {class:'topic'}, src.length ? '整合第七章初稿條文：' + src.join('、') + '（含實施要點）' : '本版新增條文'));
   const results = h('div', {class:'results'}); const comments = h('div', {class:'comments'});
   card.append(results);
   if (r.status === 'voting') card.append(buildVoteForm(r));
